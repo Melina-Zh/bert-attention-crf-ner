@@ -1,11 +1,11 @@
 # coding=utf-8
-# coding=utf-8
 import torch.nn as nn
 from pytorch_pretrained_bert import BertModel
 from model import CRF
+from model.models import Attention
 from torch.autograd import Variable
 import torch
-from model.models import MultiHeadAttention
+
 
 import ipdb
 
@@ -15,12 +15,12 @@ class BERT_LSTM_CRF(nn.Module):
     """
     bert_lstm_crf model
     """
-    def __init__(self, bert_config, tagset_size, embedding_dim, hidden_dim, d_model, n_head, d_k, d_v, dropout_ratio, dropout1, use_cuda=False):
+    def __init__(self, bert_config, tagset_size, embedding_dim, hidden_dim, d_model, d_k, d_v, dropout_ratio, dropout1, use_cuda=False):
         super(BERT_LSTM_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
         self.word_embeds = BertModel.from_pretrained(bert_config)
-        self.enc_attn = MultiHeadAttention(n_head, d_model, d_k, d_v, dropout=dropout_ratio)
+        self.attn_layer = Attention(d_model, d_k, d_v, dropout=dropout_ratio)
         self.dropout1 = nn.Dropout(p=dropout1)
         self.crf = CRF(target_size=tagset_size, average_batch=True, use_cuda=use_cuda)
         self.liner = nn.Linear(hidden_dim*2, tagset_size+2)
