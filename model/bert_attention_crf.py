@@ -5,36 +5,32 @@ from model import CRF
 from model.models import Attention
 from torch.autograd import Variable
 import torch
-
+import torch.nn.functional as F
 
 import ipdb
 
 
 
-class BERT_LSTM_CRF(nn.Module):
+
+class BERT_ATTENTION_CRF(nn.Module):
     """
-    bert_lstm_crf model
+    bert_attention_crf model
     """
     def __init__(self, bert_config, tagset_size, embedding_dim, hidden_dim, d_model, d_k, d_v, dropout_ratio, dropout1, use_cuda=False):
-        super(BERT_LSTM_CRF, self).__init__()
+        super(BERT_ATTENTION_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
         self.word_embeds = BertModel.from_pretrained(bert_config)
-        self.attn_layer = Attention(d_model, d_k, d_v, dropout=dropout_ratio)
+        self.W = nn.Parameter(torch.zeros(size=(d_model, d_model)))
+        nn.init.xavier_uniform_(self.W.data, gain=1.414)
+        self.attn_layer = Attention(d_model, dropout=dropout_ratio)
         self.dropout1 = nn.Dropout(p=dropout1)
         self.crf = CRF(target_size=tagset_size, average_batch=True, use_cuda=use_cuda)
         self.liner = nn.Linear(hidden_dim*2, tagset_size+2)
         self.tagset_size = tagset_size
 
-    def rand_init_hidden(self, batch_size):
-        """
-        random initialize hidden variable
-        """
-        return Variable(
-            torch.randn(2 * self.rnn_layers, batch_size, self.hidden_dim)), Variable(
-            torch.randn(2 * self.rnn_layers, batch_size, self.hidden_dim))
 
-    def forward(self, sentence, attention_mask=None):
+    def forward(self, sentence, domain, attention_mask=None):
         '''
         args:
             sentence (word_seq_len, batch_size) : word-level representation of sentence
@@ -46,15 +42,13 @@ class BERT_LSTM_CRF(nn.Module):
         batch_size = sentence.size(0)
         seq_length = sentence.size(1)
         embeds, _ = self.word_embeds(sentence, attention_mask=attention_mask, output_all_encoded_layers=False)
-        hidden = self.rand_init_hidden(batch_size)
-        if embeds.is_cuda:
-            hidden = (i.cuda() for i in hidden)
-        lstm_out, hidden = self.lstm(embeds, hidden)
-        lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim*2)
-        d_lstm_out = self.dropout1(lstm_out)
-        l_out = self.liner(d_lstm_out)
-        lstm_feats = l_out.contiguous().view(batch_size, seq_length, -1)
-        return lstm_feats
+
+        attention_out = self.Attention(domain, embeds, embeds)
+        hidden = sentence+F.relu(torch.bmm(attention_out, self.W)+torch.bmm(sentence, self.W))
+
+        out = self.dropout1(hidden)
+
+        return out
 
     def loss(self, feats, mask, tags):
         """
