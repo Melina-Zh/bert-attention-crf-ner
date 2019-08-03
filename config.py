@@ -4,10 +4,11 @@
 class Config(object):
     def __init__(self):
         self.label_file = './data/tag.txt'
-        self.train_file = './data/ABSA-SemEval2014/Restaurants_Train_v2_set.txt'
-        self.dev_file = './data/dev.txt'
+        self.train_file = './dataset/14semeval_rest_train_set.txt'
+        self.dev_file = './dataset/14semeval_rest_test_set.txt'
         self.test_file = './data/test.txt'
         self.vocab = './data/bert/vocab.txt'
+        self.domain_file = './model/domain_word.txt'
         self.max_length = 300
         self.use_cuda = False
         self.gpu = 0

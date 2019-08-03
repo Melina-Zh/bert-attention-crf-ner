@@ -198,14 +198,9 @@ def train(**kwargs):
 
     train_dataset = TensorDataset(train_ids, train_masks, train_tags)
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=config.batch_size)
-
-    dev_ids = torch.LongTensor([temp.input_id for temp in dev_data])
-    dev_masks = torch.LongTensor([temp.input_mask for temp in dev_data])
-    dev_tags = torch.LongTensor([temp.label_id for temp in dev_data])
-
-    dev_dataset = TensorDataset(dev_ids, dev_masks, dev_tags)
-    dev_loader = DataLoader(dev_dataset, shuffle=True, batch_size=config.batch_size)
     '''
+
+
     model = BERT_ATTENTION_CRF(config.bert_path, tagset_size, config.bert_embedding, config.bert_embedding, dropout_ratio=config.dropout_ratio, dropout1=config.dropout1, use_cuda=config.use_cuda)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -218,9 +213,31 @@ def train(**kwargs):
 
     train_features = convert_examples_to_features(
         train_examples, label_list, config.max_length, tokenizer)
+
+    dev_examples = processor.get_train_examples(config.dev_file)
+
+    dev_features = convert_examples_to_features(
+        dev_examples, label_list, config.max_length, tokenizer)
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_examples))
     logger.info("  Batch size = %d", config.batch_size)
+
+    dev_ids = torch.LongTensor([temp.input_id for temp in dev_features], dtype=torch.long)
+    dev_masks = torch.LongTensor([temp.input_mask for temp in dev_features], dtype=torch.long)
+    dev_tags = torch.LongTensor([temp.label_id for temp in dev_features], dtype=torch.long)
+
+    dev_dataset = TensorDataset(dev_ids, dev_masks, dev_tags)
+    dev_loader = DataLoader(dev_dataset, shuffle=True, batch_size=config.batch_size)
+
+    '''
+    domain part
+    '''
+    domain_f=open(config.domain_file,"r")
+    domain_tokens=[]
+    for i in domain_f:
+        domain_tokens.append(i)
+    domain_no_sep=tokenizer.convert_tokens_to_ids(domain_tokens)
+
 
     all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
     all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
@@ -248,8 +265,8 @@ def train(**kwargs):
             inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
             if config.use_cuda:
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-            feats = model(inputs, masks)
-            loss = model.loss(feats, masks,tags)
+            feats = model(inputs, domain_no_sep[0], masks)
+            loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
             if step % 50 == 0:

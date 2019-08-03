@@ -25,8 +25,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         self.crf = CRF(target_size=tagset_size, average_batch=True, use_cuda=use_cuda)
         self.tagset_size = tagset_size
 
-
-    def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None,valid_ids=None,attention_mask_label=None):
+    def forward(self, input_ids, domain_id, attention_mask=None):
         '''
         args:
             sentence (word_seq_len, batch_size) : word-level representation of sentence
@@ -35,10 +34,10 @@ class BERT_ATTENTION_CRF(nn.Module):
         return:
             crf output (word_seq_len, batch_size, tag_size, tag_size), hidden
         '''
+        domain_embeds, _ = self.bert(domain_id)
+        embeds, _ = self.bert(input_ids, attention_mask, output_all_encoded_layers=False)
 
-        embeds, _ = self.bert(input_ids, token_type_ids, attention_mask, output_all_encoded_layers=False)
-
-        attention_out = self.Attention(domain, embeds, embeds)
+        attention_out = self.Attention(domain_id, embeds, embeds)
         hidden = embeds+F.relu(torch.bmm(attention_out, self.W)+torch.bmm(embeds, self.W))
 
         out = self.dropout1(hidden)
