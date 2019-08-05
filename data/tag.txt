@@ -1,0 +1,6 @@
+<pad>
+B-AP
+I-AP
+O
+<start>
+<eos>
