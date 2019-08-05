@@ -43,12 +43,11 @@ class InputFeatures(object):
   def __init__(self,
                input_ids,
                mask,
-               segment_ids,
                label_ids,
                is_real_example=True):
     self.input_ids = input_ids
     self.mask = mask
-    self.segment_ids = segment_ids
+    #self.segment_ids = segment_ids
     self.label_ids = label_ids
     self.is_real_example = is_real_example
 
@@ -160,7 +159,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["O", "B-ap", "I-ap", "[CLS]", "[SEP]"]
+        return ["O", "B-AP", "I-AP", "[CLS]", "[SEP]", "X"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -222,9 +221,9 @@ def train(**kwargs):
     logger.info("  Num examples = %d", len(train_examples))
     logger.info("  Batch size = %d", config.batch_size)
 
-    dev_ids = torch.LongTensor([temp.input_id for temp in dev_features], dtype=torch.long)
-    dev_masks = torch.LongTensor([temp.input_mask for temp in dev_features], dtype=torch.long)
-    dev_tags = torch.LongTensor([temp.label_id for temp in dev_features], dtype=torch.long)
+    dev_ids = torch.LongTensor([temp.input_ids for temp in dev_features])
+    dev_masks = torch.LongTensor([temp.mask for temp in dev_features])
+    dev_tags = torch.LongTensor([temp.label_ids for temp in dev_features])
 
     dev_dataset = TensorDataset(dev_ids, dev_masks, dev_tags)
     dev_loader = DataLoader(dev_dataset, shuffle=True, batch_size=config.batch_size)
@@ -232,16 +231,21 @@ def train(**kwargs):
     '''
     domain part
     '''
+
     domain_f=open(config.domain_file,"r")
     domain_tokens=[]
     for i in domain_f:
-        domain_tokens.append(i)
-    domain_no_sep=tokenizer.convert_tokens_to_ids(domain_tokens)
+        domain_no_sep=tokenizer.convert_tokens_to_ids(domain_tokens)
+    while len(domain_no_sep) < config.max_length:
+        domain_no_sep.append(0)
 
 
-    all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
-    all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
+
+
+    all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
+    print(all_input_ids.shape)
+    all_input_mask = torch.LongTensor([f.mask for f in train_features])
+    all_label_ids = torch.LongTensor([f.label_ids for f in train_features])
 
     train_data = TensorDataset(all_input_ids, all_input_mask, all_label_ids)
     train_sampler = RandomSampler(train_data)
@@ -265,7 +269,8 @@ def train(**kwargs):
             inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
             if config.use_cuda:
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-            feats = model(inputs, domain_no_sep[0], masks)
+            print(torch.LongTensor(domain_no_sep).shape)
+            feats = model(inputs, torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep)), masks)
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()

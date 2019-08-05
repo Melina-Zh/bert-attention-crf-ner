@@ -35,9 +35,9 @@ class BERT_ATTENTION_CRF(nn.Module):
             crf output (word_seq_len, batch_size, tag_size, tag_size), hidden
         '''
         domain_embeds, _ = self.bert(domain_id)
-        embeds, _ = self.bert(input_ids, attention_mask, output_all_encoded_layers=False)
+        embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
 
-        attention_out = self.Attention(domain_id, embeds, embeds)
+        attention_out = self.Attention(domain_embeds[1], embeds, embeds)
         hidden = embeds+F.relu(torch.bmm(attention_out, self.W)+torch.bmm(embeds, self.W))
 
         out = self.dropout1(hidden)
