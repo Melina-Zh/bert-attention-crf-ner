@@ -8,8 +8,8 @@ class Attention(nn.Module):
 
     def __init__(self, d_model, attn_dropout=0.1):
         super().__init__()
-        self.W = nn.Linear(d_model, d_model)
-        self.U = nn.Linear(d_model, d_model)
+        self.W = nn.Parameter(torch.zeros(size=(d_model, d_model)))
+        self.U = nn.Parameter(torch.zeros(size=(d_model, d_model)))
         self.dropout = nn.Dropout(attn_dropout)
         self.softmax = nn.Softmax()
         self.tanh = nn.Tanh()
