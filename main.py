@@ -199,7 +199,7 @@ def train(**kwargs):
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=config.batch_size)
     '''
 
-
+    print(tagset_size)
     model = BERT_ATTENTION_CRF(config.bert_path, tagset_size, config.bert_embedding, config.bert_embedding, dropout_ratio=config.dropout_ratio, dropout1=config.dropout1, use_cuda=config.use_cuda)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')

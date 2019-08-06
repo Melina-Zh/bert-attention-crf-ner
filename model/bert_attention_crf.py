@@ -18,13 +18,14 @@ class BERT_ATTENTION_CRF(nn.Module):
         super(BERT_ATTENTION_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.bert = BertModel.from_pretrained(bert_config)
+        self.tagset_size = tagset_size
+        self.d_model = d_model
         self.W = nn.Linear(d_model, d_model, bias = False)
         self.attn_layer = Attention(d_model, attn_dropout=dropout_ratio)
         self.dropout1 = nn.Dropout(p=dropout1)
-        self.crf = CRF(target_size=tagset_size, average_batch=True, use_cuda=use_cuda)
+        self.crf = CRF(tagset_size=tagset_size, average_batch=True, use_cuda=use_cuda)
         self.liner = nn.Linear(d_model*2, tagset_size+2)
-        self.tagset_size = tagset_size
-        self.d_model=d_model
+
 
     def forward(self, input_ids, domain_id, attention_mask=None):
         '''
@@ -39,7 +40,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
         batch_size = input_ids.size(0)
         seq_length = input_ids.size(1)
-        W=self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
+        W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         attention_out = self.attn_layer(domain_embeds[1], embeds, embeds)
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         

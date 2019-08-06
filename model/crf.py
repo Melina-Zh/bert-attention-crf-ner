@@ -27,7 +27,7 @@ class CRF(nn.Module):
     def __init__(self, **kwargs):
         """
         Args:
-            target_size: int, target size
+            tagset_size: int, tagset size
             use_cuda: bool, 是否使用gpu, default is True
             average_batch: bool, loss是否作平均, default is True
         """
@@ -35,7 +35,7 @@ class CRF(nn.Module):
         for k in kwargs:
             self.__setattr__(k, kwargs[k])
         self.START_TAG_IDX, self.END_TAG_IDX = -2, -1
-        init_transitions = torch.zeros(self.target_size+2, self.target_size+2)
+        init_transitions = torch.zeros(self.tagset_size+2, self.tagset_size+2)
         init_transitions[:, self.START_TAG_IDX] = -1000.
         init_transitions[self.END_TAG_IDX, :] = -1000.
         if self.use_cuda:
@@ -47,7 +47,7 @@ class CRF(nn.Module):
         Do the forward algorithm to compute the partition function (batched).
 
         Args:
-            feats: size=(batch_size, seq_len, self.target_size+2)
+            feats: size=(batch_size, seq_len, self.tagset_size+2)
             mask: size=(batch_size, seq_len)
 
         Returns:
@@ -91,7 +91,7 @@ class CRF(nn.Module):
     def _viterbi_decode(self, feats, mask=None):
         """
         Args:
-            feats: size=(batch_size, seq_len, self.target_size+2)
+            feats: size=(batch_size, seq_len, self.tagset_size+2)
             mask: size=(batch_size, seq_len)
 
         Returns:
