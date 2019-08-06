@@ -266,9 +266,11 @@ def train(**kwargs):
             model.zero_grad()
             inputs, masks, tags = batch
             inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
+            domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
             if config.use_cuda:
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-            feats = model(inputs, torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep)), masks)
+                domain_id = domain_id.cuda()
+            feats = model(inputs, domain_id, masks)
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
