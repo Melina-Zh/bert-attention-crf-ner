@@ -243,7 +243,6 @@ def train(**kwargs):
 
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
-    print(all_input_ids.shape)
     all_input_mask = torch.LongTensor([f.mask for f in train_features])
     all_label_ids = torch.LongTensor([f.label_ids for f in train_features])
 
@@ -269,7 +268,6 @@ def train(**kwargs):
             inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
             if config.use_cuda:
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-            print(torch.LongTensor(domain_no_sep).shape)
             feats = model(inputs, torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep)), masks)
             loss = model.loss(feats, masks, tags)
             loss.backward()

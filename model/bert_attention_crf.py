@@ -18,12 +18,13 @@ class BERT_ATTENTION_CRF(nn.Module):
         super(BERT_ATTENTION_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.bert = BertModel.from_pretrained(bert_config)
-        self.W = nn.Parameter(torch.zeros(size=(d_model, d_model)))
-        nn.init.xavier_uniform_(self.W.data, gain=1.414)
+        self.W = nn.Linear(d_model, d_model, bias = False)
         self.attn_layer = Attention(d_model, attn_dropout=dropout_ratio)
         self.dropout1 = nn.Dropout(p=dropout1)
         self.crf = CRF(target_size=tagset_size, average_batch=True, use_cuda=use_cuda)
+        self.liner = nn.Linear(d_model*2, tagset_size+2)
         self.tagset_size = tagset_size
+        self.d_model=d_model
 
     def forward(self, input_ids, domain_id, attention_mask=None):
         '''
@@ -36,13 +37,16 @@ class BERT_ATTENTION_CRF(nn.Module):
         '''
         domain_embeds, _ = self.bert(domain_id)
         embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
-
+        batch_size = input_ids.size(0)
+        seq_length = input_ids.size(1)
+        W=self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         attention_out = self.attn_layer(domain_embeds[1], embeds, embeds)
-        hidden = embeds+F.relu(torch.bmm(attention_out, self.W)+torch.bmm(embeds, self.W))
-
+        hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
+        
         out = self.dropout1(hidden)
-
-        return out
+        feats = self.liner(out)
+        feats_out = feats.contiguous().view(batch_size, seq_length, -1)
+        return feats_out
 
     def loss(self, feats, mask, tags):
         """
@@ -51,6 +55,9 @@ class BERT_ATTENTION_CRF(nn.Module):
             tags: size=(batch_size, seq_len)
         :return:
         """
+        print(feats.shape)
+        print(mask.shape)
+        print(tags.shape)
         loss_value = self.crf.neg_log_likelihood_loss(feats, mask, tags)
         batch_size = feats.size(0)
         loss_value /= float(batch_size)

@@ -1,2 +1,12 @@
 .idea
-__pycache__
+model/__pycache__/
+bert-attention-crf.log
+data/bert/bert_config.json
+data/bert/bert_model.ckpt.data-00000-of-00001
+data/bert/bert_model.ckpt.*
+data/bert/pytorch_model.bin
+data/bert/vocab.txt
+*.pyc
+train.sh
+train.slurm
+model/__pycache__/*
