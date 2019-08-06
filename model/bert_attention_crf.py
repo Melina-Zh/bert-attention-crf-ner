@@ -24,7 +24,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         self.attn_layer = Attention(d_model, attn_dropout=dropout_ratio)
         self.dropout1 = nn.Dropout(p=dropout1)
         self.crf = CRF(tagset_size=tagset_size, average_batch=True, use_cuda=use_cuda)
-        self.liner = nn.Linear(d_model*2, tagset_size+2)
+        self.liner = nn.Linear(d_model, tagset_size+2)
 
 
     def forward(self, input_ids, domain_id, attention_mask=None):
@@ -44,13 +44,14 @@ class BERT_ATTENTION_CRF(nn.Module):
         attention_out = self.attn_layer(domain_embeds[1], embeds, embeds)
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         print("hidden"+str(hidden.shape))
-        hidden_out=hidden.contiguous().view(-1, self.d_model*2)
+        hidden_out=hidden.contiguous().view(-1, self.d_model)
         print("hiddenout" + str(hidden_out.shape))
         out = self.dropout1(hidden_out)
         print("before liner"+str(out.shape))
         feats = self.liner(out)
         print("after liner" + str(feats.shape))
         feats_out = feats.contiguous().view(batch_size, seq_length, -1)
+
         return feats_out
 
     def loss(self, feats, mask, tags):
