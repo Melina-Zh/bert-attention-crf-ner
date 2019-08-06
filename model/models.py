@@ -16,8 +16,8 @@ class Attention(nn.Module):
         self.tanh = nn.Tanh()
 
     def forward(self, q, k, v, mask=None):
-        print(k.shape)
-        print(q.shape)
+        #print(k.shape)
+        #print(q.shape)
         batch_size=k.size(0)
         W=self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         U=self.U.weight.unsqueeze(0).expand(1, self.d_model, self.d_model)
