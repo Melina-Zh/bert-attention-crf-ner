@@ -45,7 +45,9 @@ class BERT_ATTENTION_CRF(nn.Module):
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         hidden_out=hidden.contiguous().view(-1, self.d_model*2)
         out = self.dropout1(hidden_out)
+        print("before liner"+str(out.shape))
         feats = self.liner(out)
+        print("after liner" + str(feats.shape))
         feats_out = feats.contiguous().view(batch_size, seq_length, -1)
         return feats_out
 
