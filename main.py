@@ -276,12 +276,12 @@ def train(**kwargs):
             optimizer.step()
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
-        loss_temp = dev(model, dev_loader, epoch, config)
+        loss_temp = dev(model, dev_loader, epoch, config, domain_id)
         if loss_temp < eval_loss:
-            save_model(model,epoch)
+            save_model(model, epoch)
 
 
-def dev(model, dev_loader, epoch, config):
+def dev(model, dev_loader, epoch, config, domain_id):
     model.eval()
     eval_loss = 0
     true = []
@@ -293,7 +293,8 @@ def dev(model, dev_loader, epoch, config):
         inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
         if config.use_cuda:
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-        feats = model(inputs, masks)
+            domain_id = domain_id.cuda()
+        feats = model(inputs, domain_id, masks)
         path_score, best_path = model.crf(feats, masks.byte())
         loss = model.loss(feats, masks, tags)
         eval_loss += loss.item()
