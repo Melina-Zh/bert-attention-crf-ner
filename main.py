@@ -300,6 +300,10 @@ def dev(model, dev_loader, epoch, config, domain_id):
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
+    correct = pred.eq(true).double()
+    correct = correct.sum()
+
+    print("acc: " + str(correct / len(true)))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
     return eval_loss
