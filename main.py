@@ -15,6 +15,8 @@ from model.bert_attention_crf import BERT_ATTENTION_CRF
 import os
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
+import numpy as np
+import time
 from tqdm import tqdm, trange
 logger = logging.getLogger(__name__)
 
@@ -249,6 +251,7 @@ def train(**kwargs):
     train_data = TensorDataset(all_input_ids, all_input_mask, all_label_ids)
     train_sampler = RandomSampler(train_data)
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=config.batch_size)
+    time1 = time.time()
     if config.load_model:
         assert config.load_path is not None
         model = load_model(model, name=config.load_path)
@@ -260,7 +263,7 @@ def train(**kwargs):
     eval_loss = 10000
     for epoch in range(config.base_epoch):
         step = 0
-        for i, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
+        for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
             step += 1
             model.zero_grad()
@@ -279,7 +282,8 @@ def train(**kwargs):
         loss_temp = dev(model, dev_loader, epoch, config, domain_id)
         if loss_temp < eval_loss:
             save_model(model, epoch)
-
+    time2 = time.time()
+    print("total time: {:.1f}s".format(time2-time1))
 
 def dev(model, dev_loader, epoch, config, domain_id):
     model.eval()
@@ -300,10 +304,8 @@ def dev(model, dev_loader, epoch, config, domain_id):
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
-    correct = pred.eq(true).double()
-    correct = correct.sum()
 
-    print("acc: " + str(correct / len(true)))
+    print("acc: {:.4f}".format(np.mean(np.array(pred)==np.array(true))))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
     return eval_loss

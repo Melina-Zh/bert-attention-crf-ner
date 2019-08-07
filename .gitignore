@@ -10,3 +10,4 @@ data/bert/vocab.txt
 train.sh
 train.slurm
 model/__pycache__/*
+result/*
