@@ -321,7 +321,7 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic):
         correct_sum -= len_pad_X
         tags_len += tags.size(0)*tags.size(1)
         tags_len -= len_pad_X
-        
+
         print("correct_sum: {}".format(correct_sum))
         print("tags_len: {}".format(tags_len))
     print("acc: {:.4f}".format(correct_sum/tags_len))
