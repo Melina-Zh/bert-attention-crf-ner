@@ -318,6 +318,7 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic):
         len_pad_X = len(tags[tags == label_dic["<pad>"]]) + len(tags[tags == label_dic["X"]])
 
         correct_sum += correct
+
         correct_sum -= len_pad_X
         tags_len += tags.size(0)*tags.size(1)
         tags_len -= len_pad_X
