@@ -316,7 +316,7 @@ def dev(model, dev_loader, epoch, config, domain_id):
         correct = best_path.eq(tags).double()
         correct = correct.sum()
         correct_sum += correct
-        tags_len += tags.size(0) 
+        tags_len += tags.size(0)*tags.size(1) 
         print("correct_sum: {}".format(correct_sum))
         print("tags_len: {}".format(tags_len))
     print("acc: {:.4f}".format(correct_sum/tags_len))
