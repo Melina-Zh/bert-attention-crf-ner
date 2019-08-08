@@ -12,7 +12,7 @@ class Config(object):
         self.max_length = 300
         self.use_cuda = True
         self.gpu = 0
-        self.batch_size = 30
+        self.batch_size = 20
         self.bert_path = './data/bert'
         self.bert_embedding = 768
         self.dropout1 = 0.5
@@ -24,7 +24,7 @@ class Config(object):
         self.optim = 'Adam'
         self.load_model = False
         self.load_path = None
-        self.base_epoch = 100
+        self.base_epoch = 1
 
     def update(self, **kwargs):
         for k, v in kwargs.items():

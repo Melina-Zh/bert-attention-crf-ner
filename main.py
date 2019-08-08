@@ -294,6 +294,8 @@ def dev(model, dev_loader, epoch, config, domain_id):
     true = []
     pred = []
     length = 0
+    tags_len = 0
+    correct_sum = 0
     for i, batch in enumerate(dev_loader):
         inputs, masks, tags = batch
         length += inputs.size(0)
@@ -307,8 +309,17 @@ def dev(model, dev_loader, epoch, config, domain_id):
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
-
-    print("acc: {:.4f}".format(np.mean(np.array(pred)==np.array(true))))
+        print("best_path")
+        print(best_path)
+        print("tags")
+        print(tags)
+        correct = best_path.eq(tags).double()
+        correct = correct.sum()
+        correct_sum += correct
+        tags_len += tags.size(0) 
+        print("correct_sum: {}".format(correct_sum))
+        print("tags_len: {}".format(tags_len))
+    print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
     return eval_loss
