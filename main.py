@@ -91,9 +91,6 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         # after that we don't add "[SEP]" because we want a sentence don't have
         # stop tag, because i think its not very necessary.
         # or if add "[SEP]" the model even will cause problem, special the crf layer was used.
-        ntokens.append("[SEP]")
-        segment_ids.append(0)
-        label_ids.append(label_map["<eos>"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
         mask = [1] * len(input_ids)
         # use zero to padding and you should
@@ -164,7 +161,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["O", "<pad>", "B-AP", "I-AP", "X", "<start>", "<eos>"]
+        return ["O", "<pad>", "B-AP", "I-AP", "X", "<start>"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -282,13 +279,13 @@ def train(**kwargs):
             optimizer.step()
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
-        loss_temp = dev(model, dev_loader, epoch, config, domain_id)
+        loss_temp = dev(model, dev_loader, epoch, config, domain_id, label_dic)
         if loss_temp < eval_loss:
             save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
 
-def dev(model, dev_loader, epoch, config, domain_id):
+def dev(model, dev_loader, epoch, config, domain_id, label_dic):
     model.eval()
     eval_loss = 0
     true = []
@@ -313,10 +310,17 @@ def dev(model, dev_loader, epoch, config, domain_id):
         print(best_path)
         print("tags")
         print(tags)
+        best_path[tags == label_dic["<pad>"]] = label_dic["<pad>"]
+        best_path[tags == label_dic["X"]] = label_dic["X"]
+
         correct = best_path.eq(tags).double()
         correct = correct.sum()
+        len_pad_X = len(tags[tags == label_dic["<pad>"]]) + len(tags[tags == label_dic["X"]])
+
         correct_sum += correct
-        tags_len += tags.size(0) 
+        correct_sum -= len_pad_X
+        tags_len += tags.size(0)*tags.size(1)
+        tags_len -= len_pad_X
         print("correct_sum: {}".format(correct_sum))
         print("tags_len: {}".format(tags_len))
     print("acc: {:.4f}".format(correct_sum/tags_len))
