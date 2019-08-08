@@ -307,7 +307,7 @@ def dev(model, dev_loader, epoch, config, domain_id):
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
-        
+
     print("acc: {:.4f}".format(np.mean(np.array(pred)==np.array(true))))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
