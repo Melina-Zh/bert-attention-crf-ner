@@ -1,6 +1,7 @@
+O
 <pad>
 B-AP
 I-AP
-O
+X
 <start>
 <eos>

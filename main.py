@@ -83,7 +83,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         label_ids = []
         ntokens.append("[CLS]")
         segment_ids.append(0)
-        label_ids.append(label_map["[CLS]"])
+        label_ids.append(label_map["<start>"])
         for i, token in enumerate(tokens):
             ntokens.append(token)
             segment_ids.append(0)
@@ -91,6 +91,9 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         # after that we don't add "[SEP]" because we want a sentence don't have
         # stop tag, because i think its not very necessary.
         # or if add "[SEP]" the model even will cause problem, special the crf layer was used.
+        ntokens.append("[SEP]")
+        segment_ids.append(0)
+        label_ids.append(label_map["<eos>"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
         mask = [1] * len(input_ids)
         # use zero to padding and you should
@@ -98,7 +101,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             input_ids.append(0)
             mask.append(0)
             segment_ids.append(0)
-            label_ids.append(0)
+            label_ids.append(label_map["<pad>"])
             ntokens.append("[PAD]")
         assert len(input_ids) == max_seq_length
         assert len(mask) == max_seq_length
@@ -161,7 +164,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["O", "B-AP", "I-AP", "[CLS]", "[SEP]", "X"]
+        return ["O", "<pad>", "B-AP", "I-AP", "X", "<start>", "<eos>"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -304,7 +307,7 @@ def dev(model, dev_loader, epoch, config, domain_id):
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
-
+        
     print("acc: {:.4f}".format(np.mean(np.array(pred)==np.array(true))))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
