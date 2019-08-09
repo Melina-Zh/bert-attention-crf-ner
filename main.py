@@ -260,6 +260,7 @@ def train(**kwargs):
     optimizer = getattr(optim, config.optim)
     optimizer = optimizer(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
+    acc_f = open("acc.log", 'w')
     for epoch in range(config.base_epoch):
         step = 0
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
@@ -278,13 +279,15 @@ def train(**kwargs):
             optimizer.step()
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
-        loss_temp = dev(model, dev_loader, epoch, config, domain_id, label_dic)
+        acc_f.write("Epoch {} :".format(epoch))
+        loss_temp = dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f)
         if loss_temp < eval_loss:
             save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
+    acc_f.close()
 
-def dev(model, dev_loader, epoch, config, domain_id, label_dic):
+def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
     model.eval()
     eval_loss = 0
     true = []
@@ -315,6 +318,8 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic):
         correct_sum -= len_pad_X
         tags_len += tags.size(0)*tags.size(1)
         tags_len -= len_pad_X
+
+    acc_f.write("acc: {:.4f}\n".format(correct_sum/tags_len))
 
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
