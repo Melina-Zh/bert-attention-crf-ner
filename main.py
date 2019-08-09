@@ -260,9 +260,10 @@ def train(**kwargs):
     optimizer = getattr(optim, config.optim)
     optimizer = optimizer(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
-    acc_f = open("acc.log", 'w')
+
     for epoch in range(config.base_epoch):
         step = 0
+        acc_f = open("acc.log", 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
             step += 1
@@ -320,7 +321,7 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
         tags_len -= len_pad_X
 
     acc_f.write("acc: {:.4f}\n".format(correct_sum/tags_len))
-
+    acc_f.close()
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
