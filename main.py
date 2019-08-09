@@ -201,7 +201,6 @@ def train(**kwargs):
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=config.batch_size)
     '''
 
-    print(tagset_size)
     model = BERT_ATTENTION_CRF(config.bert_path, tagset_size, config.bert_embedding, config.bert_embedding, dropout_ratio=config.dropout_ratio, dropout1=config.dropout1, use_cuda=config.use_cuda)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -306,25 +305,17 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic):
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
-        print("best_path")
-        print(best_path)
-        print("tags")
-        print(tags)
         best_path[tags == label_dic["<pad>"]] = label_dic["<pad>"]
         best_path[tags == label_dic["X"]] = label_dic["X"]
 
         correct = best_path.eq(tags).double()
-        correct = correct.sum()
+        correct = int(correct.sum())
         len_pad_X = len(tags[tags == label_dic["<pad>"]]) + len(tags[tags == label_dic["X"]])
-
         correct_sum += correct
-
         correct_sum -= len_pad_X
         tags_len += tags.size(0)*tags.size(1)
         tags_len -= len_pad_X
 
-        print("correct_sum: {}".format(correct_sum))
-        print("tags_len: {}".format(tags_len))
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
