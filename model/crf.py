@@ -35,7 +35,7 @@ class CRF(nn.Module):
         for k in kwargs:
             self.__setattr__(k, kwargs[k])
         self.START_TAG_IDX, self.END_TAG_IDX = -2, -1
-        init_transitions = torch.zeros(self.tagset_size+2, self.tagset_size+2)
+        init_transitions = torch.zeros(self.tagset_size, self.tagset_size)
         init_transitions[:, self.START_TAG_IDX] = -1000.
         init_transitions[self.END_TAG_IDX, :] = -1000.
         if self.use_cuda:

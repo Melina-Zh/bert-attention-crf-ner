@@ -24,7 +24,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         self.attn_layer = Attention(d_model, attn_dropout=dropout_ratio)
         self.dropout1 = nn.Dropout(p=dropout1)
         self.crf = CRF(tagset_size=tagset_size, average_batch=True, use_cuda=use_cuda)
-        self.liner = nn.Linear(d_model, tagset_size+2)
+        self.liner = nn.Linear(d_model, tagset_size)
 
 
     def forward(self, input_ids, domain_id, attention_mask=None):

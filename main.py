@@ -281,9 +281,9 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        loss_temp = dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f)
-        if loss_temp < eval_loss:
-            save_model(model, epoch)
+        acc = dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f)
+        
+        save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
@@ -305,16 +305,16 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
             domain_id = domain_id.cuda()
         feats = model(inputs, domain_id, masks)
         path_score, best_path = model.crf(feats, masks.byte())
-        loss = model.loss(feats, masks, tags)
-        eval_loss += loss.item()
+        #loss = model.loss(feats, masks, tags)
+        #eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
         best_path[tags == label_dic["<pad>"]] = label_dic["<pad>"]
-        best_path[tags == label_dic["X"]] = label_dic["X"]
+        #best_path[tags == label_dic["X"]] = label_dic["X"]
 
         correct = best_path.eq(tags).double()
         correct = int(correct.sum())
-        len_pad_X = len(tags[tags == label_dic["<pad>"]]) + len(tags[tags == label_dic["X"]])
+        len_pad_X = len(tags[tags == label_dic["<pad>"]])
         correct_sum += correct
         correct_sum -= len_pad_X
         tags_len += tags.size(0)*tags.size(1)
@@ -325,7 +325,7 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
-    return eval_loss
+    return correct_sum/tags_len
 
 
 if __name__ == '__main__':
