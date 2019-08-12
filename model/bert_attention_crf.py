@@ -36,16 +36,14 @@ class BERT_ATTENTION_CRF(nn.Module):
         return:
             crf output (word_seq_len, batch_size, tag_size, tag_size), hidden
         '''
-        domain_embeds, _ = self.bert(domain_id)
+        domain_embeds, _ = self.bert(domain_id, output_all_encoded_layers=False)
         embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
         batch_size = input_ids.size(0)
         seq_length = input_ids.size(1)
         W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         print("domain_shape:")
-        print(domain_embeds.shape)
-        import sys
-        sys.exit(0)
-        attention_out = self.attn_layer(domain_embeds[1], embeds, embeds)
+        print(torch.Tensor(domain_embeds).shape)
+        attention_out = self.attn_layer(torch.Tensor(domain_embeds), embeds, embeds)
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         #print("hidden"+str(hidden.shape))
         hidden_out=hidden.contiguous().view(-1, self.d_model)
@@ -65,9 +63,9 @@ class BERT_ATTENTION_CRF(nn.Module):
             tags: size=(batch_size, seq_len)
         :return:
         """
-        #print(feats.shape)
-        #print(mask.shape)
-        #print(tags.shape)
+        print(feats.shape)
+        print(mask.shape)
+        print(tags.shape)
         loss_value = self.crf.neg_log_likelihood_loss(feats, mask, tags)
         batch_size = feats.size(0)
         loss_value /= float(batch_size)

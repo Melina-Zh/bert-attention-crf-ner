@@ -3,3 +3,5 @@ O
 B-AP
 I-AP
 X
+<start>
+<eos>

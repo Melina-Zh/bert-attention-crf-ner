@@ -12,7 +12,7 @@ class Config(object):
         self.max_length = 42
         self.use_cuda = True
         self.gpu = 0
-        self.batch_size = 32
+        self.batch_size = 64
         self.bert_path = './data/bert'
         self.bert_embedding = 768
         self.dropout1 = 0.5
