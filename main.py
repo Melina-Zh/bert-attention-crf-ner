@@ -74,9 +74,9 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                     labels.append(label)
                 else:
                     labels.append("X")
-        if len(tokens) >= max_seq_length - 1:
-            tokens = tokens[0:(max_seq_length - 1)]
-            labels = labels[0:(max_seq_length - 1)]
+        if len(tokens) >= max_seq_length - 2:
+            tokens = tokens[0:(max_seq_length - 2)] # [CLS] and [SEP]
+            labels = labels[0:(max_seq_length - 2)]
         ntokens = []
         segment_ids = []
         label_ids = []
