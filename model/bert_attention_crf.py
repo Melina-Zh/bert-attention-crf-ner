@@ -43,7 +43,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         #print("domain_shape:")
         #print(torch.Tensor(domain_embeds).shape)
-        attention_out = self.attn_layer(torch.Tensor(domain_embeds), embeds, embeds)
+        attention_out = self.attn_layer(domain_embeds, embeds, embeds)
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         #print("hidden"+str(hidden.shape))
         hidden_out=hidden.contiguous().view(-1, self.d_model)
