@@ -161,7 +161,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["O", "<pad>", "B-AP", "I-AP", "X", "<start>"]
+        return [ "<pad>", "O", "B-AP", "I-AP", "X", "<start>"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""

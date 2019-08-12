@@ -1,5 +1,5 @@
-O
 <pad>
+O
 B-AP
 I-AP
 X
