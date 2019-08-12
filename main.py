@@ -309,16 +309,11 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
         #eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
-        best_path[tags == label_dic["<pad>"]] = label_dic["<pad>"]
-        #best_path[tags == label_dic["X"]] = label_dic["X"]
 
         correct = best_path.eq(tags).double()
         correct = int(correct.sum())
-        len_pad_X = len(tags[tags == label_dic["<pad>"]])
         correct_sum += correct
-        correct_sum -= len_pad_X
         tags_len += tags.size(0)*tags.size(1)
-        tags_len -= len_pad_X
 
     acc_f.write("acc: {:.4f}\n".format(correct_sum/tags_len))
     acc_f.close()
