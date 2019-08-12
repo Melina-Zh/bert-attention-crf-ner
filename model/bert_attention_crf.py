@@ -41,6 +41,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         batch_size = input_ids.size(0)
         seq_length = input_ids.size(1)
         W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
+        print(domain_embeds.shape)
         attention_out = self.attn_layer(domain_embeds[1], embeds, embeds)
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         #print("hidden"+str(hidden.shape))

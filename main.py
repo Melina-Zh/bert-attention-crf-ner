@@ -74,7 +74,6 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                     labels.append(label)
                 else:
                     labels.append("X")
-        # only Account for [CLS] with "- 1".
         if len(tokens) >= max_seq_length - 1:
             tokens = tokens[0:(max_seq_length - 1)]
             labels = labels[0:(max_seq_length - 1)]
@@ -88,9 +87,9 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             ntokens.append(token)
             segment_ids.append(0)
             label_ids.append(label_map[labels[i]])
-        # after that we don't add "[SEP]" because we want a sentence don't have
-        # stop tag, because i think its not very necessary.
-        # or if add "[SEP]" the model even will cause problem, special the crf layer was used.
+        ntokens.append("[SEP]")
+        segment_ids.append(0)
+        label_ids.append(label_map["<eos>"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
         mask = [1] * len(input_ids)
         # use zero to padding and you should
@@ -161,7 +160,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return [ "<pad>", "O", "B-AP", "I-AP", "X", "<start>"]
+        return ["<pad>", "O", "B-AP", "I-AP", "X", "<start>", "<eos>"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""

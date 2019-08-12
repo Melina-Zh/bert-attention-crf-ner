@@ -24,7 +24,7 @@ class Config(object):
         self.optim = 'Adam'
         self.load_model = False
         self.load_path = None
-        self.base_epoch = 100
+        self.base_epoch = 1
 
     def update(self, **kwargs):
         for k, v in kwargs.items():
