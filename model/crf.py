@@ -199,7 +199,6 @@ class CRF(nn.Module):
             1, tag_size).expand(batch_size, tag_size)
         length_mask = torch.sum(mask, dim=1).view(batch_size, 1).long()
         end_ids = torch.gather(tags, 1, length_mask-1)
-
         end_energy = torch.gather(end_transition, 1, end_ids)
 
         new_tags = new_tags.transpose(1, 0).contiguous().view(seq_len, batch_size, 1)

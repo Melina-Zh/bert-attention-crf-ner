@@ -6,7 +6,7 @@ from model.models import Attention
 from torch.autograd import Variable
 import torch
 import torch.nn.functional as F
-
+import numpy as np
 import ipdb
 
 
@@ -38,6 +38,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         '''
         domain_embeds, _ = self.bert(domain_id, output_all_encoded_layers=False)
         embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
+
         batch_size = input_ids.size(0)
         seq_length = input_ids.size(1)
         W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
@@ -63,7 +64,7 @@ class BERT_ATTENTION_CRF(nn.Module):
             tags: size=(batch_size, seq_len)
         :return:
         """
-        #print(feats.shape)
+        print(feats.shape)
         #print(mask.shape)
         #print(tags.shape)
         loss_value = self.crf.neg_log_likelihood_loss(feats, mask, tags)

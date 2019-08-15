@@ -59,6 +59,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
     label_map = {label: i for i, label in enumerate(label_list, 0)}
 
     features = []
+    all_tokens=[]
     for (ex_index, example) in enumerate(examples):
         textlist = example.text_a.split(' ')
         labellist = example.label
@@ -119,7 +120,8 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                 label_ids=label_ids,
             )
         )
-    return features
+        all_tokens.append(ntokens)
+    return features, all_tokens
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -210,12 +212,12 @@ def train(**kwargs):
     num_labels = len(label_list) + 1
     train_examples = processor.get_train_examples(config.train_file)
 
-    train_features = convert_examples_to_features(
+    train_features, train_all_tokens = convert_examples_to_features(
         train_examples, label_list, config.max_length, tokenizer)
 
     dev_examples = processor.get_train_examples(config.dev_file)
 
-    dev_features = convert_examples_to_features(
+    dev_features, dev_all_tokens = convert_examples_to_features(
         dev_examples, label_list, config.max_length, tokenizer)
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_examples))
@@ -232,15 +234,12 @@ def train(**kwargs):
     domain part
     '''
 
-    domain_f=open(config.domain_file,"r")
-    domain_tokens=[]
+    domain_f = open(config.domain_file, "r")
+    domain_tokens = []
     for i in domain_f:
-        domain_no_sep=tokenizer.convert_tokens_to_ids(domain_tokens)
+        domain_no_sep = tokenizer.convert_tokens_to_ids(domain_tokens)
     while len(domain_no_sep) < config.max_length:
         domain_no_sep.append(0)
-
-
-
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
     all_input_mask = torch.LongTensor([f.mask for f in train_features])
@@ -262,6 +261,7 @@ def train(**kwargs):
 
     for epoch in range(config.base_epoch):
         step = 0
+        token_idx = 0
         acc_f = open("acc.log", 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
@@ -274,6 +274,13 @@ def train(**kwargs):
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
                 domain_id = domain_id.cuda()
             feats = model(inputs, domain_id, masks)
+            batch_tokens = train_all_tokens[token_idx:token_idx+inputs.size(0)]
+            token_idx += inputs.size(0)
+            batch_tokens = np.array(batch_tokens)
+            masks[tags == label_list.index('<start>')] = 0
+            masks[tags == label_list.index('<eos>')] = 0
+            tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
+            tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
