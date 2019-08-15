@@ -233,7 +233,6 @@ def train(**kwargs):
     '''
     domain part
     '''
-
     domain_f = open(config.domain_file, "r")
     domain_tokens = []
     for i in domain_f:
@@ -274,13 +273,14 @@ def train(**kwargs):
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
                 domain_id = domain_id.cuda()
             feats = model(inputs, domain_id, masks)
-            batch_tokens = train_all_tokens[token_idx:token_idx+inputs.size(0)]
             token_idx += inputs.size(0)
-            batch_tokens = np.array(batch_tokens)
+          
+            '''
             masks[tags == label_list.index('<start>')] = 0
             masks[tags == label_list.index('<eos>')] = 0
             tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
             tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
+            '''
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
@@ -310,10 +310,12 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
             domain_id = domain_id.cuda()
         feats = model(inputs, domain_id, masks)
+        '''
         masks[tags == label_list.index('<start>')] = 0
         masks[tags == label_list.index('<eos>')] = 0
         tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
         tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
+        '''
         path_score, best_path = model.crf(feats, masks.byte())
         #loss = model.loss(feats, masks, tags)
         #eval_loss += loss.item()
