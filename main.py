@@ -287,14 +287,14 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        acc = dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f)
+        acc = dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_f)
         
         save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
-def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
+def dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_f):
     model.eval()
     eval_loss = 0
     true = []
@@ -310,6 +310,10 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, acc_f):
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
             domain_id = domain_id.cuda()
         feats = model(inputs, domain_id, masks)
+        masks[tags == label_list.index('<start>')] = 0
+        masks[tags == label_list.index('<eos>')] = 0
+        tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
+        tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
         path_score, best_path = model.crf(feats, masks.byte())
         #loss = model.loss(feats, masks, tags)
         #eval_loss += loss.item()
