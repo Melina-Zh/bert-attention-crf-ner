@@ -75,9 +75,9 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                     labels.append(label)
                 else:
                     labels.append("X")
-        if len(tokens) >= max_seq_length - 2:
-            tokens = tokens[0:(max_seq_length - 2)] # [CLS] and [SEP]
-            labels = labels[0:(max_seq_length - 2)]
+        if len(tokens) >= max_seq_length - 4:
+            tokens = tokens[0:(max_seq_length - 4)] # [CLS] and [SEP]
+            labels = labels[0:(max_seq_length - 4)]
         ntokens = []
         segment_ids = []
         label_ids = []
@@ -235,11 +235,14 @@ def train(**kwargs):
     '''
 
     domain_f = open(config.domain_file, "r")
-    domain_tokens = []
+    domain_with_sep = []
     for i in domain_f:
-        domain_no_sep = tokenizer.convert_tokens_to_ids(domain_tokens)
-    while len(domain_no_sep) < config.max_length:
-        domain_no_sep.append(0)
+        domain_with_sep.append(i)
+
+    domain_with_sep.append("[SEP]")
+    domain_with_sep = tokenizer.convert_tokens_to_ids(domain_with_sep)
+    domain_with_sep = torch.LongTensor(domain_with_sep)
+
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
     all_input_mask = torch.LongTensor([f.mask for f in train_features])
@@ -269,32 +272,40 @@ def train(**kwargs):
             model.zero_grad()
             inputs, masks, tags = batch
             inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
-            domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
+            domain_id = Variable(domain_with_sep)
+            domain_id = domain_id.expand(inputs.size(0), 2)
+
+            domain_mask = torch.ones(inputs.size(0), 2).long()
+
             if config.use_cuda:
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-                domain_id = domain_id.cuda()
-            feats = model(inputs, domain_id, masks)
-            batch_tokens = train_all_tokens[token_idx:token_idx+inputs.size(0)]
-            token_idx += inputs.size(0)
-            batch_tokens = np.array(batch_tokens)
+                domain_id = domain_id.cuda()#[batch_size, 2]
+                domain_mask = domain_mask.cuda()
+
+            inputs = torch.cat((inputs, domain_id), 1)#[batch_size, seq_len+2]
+            masks_with_domain = torch.cat((masks, domain_mask), 1)
+            feats = model(inputs, masks_with_domain)
+
+            '''
             masks[tags == label_list.index('<start>')] = 0
             masks[tags == label_list.index('<eos>')] = 0
             tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
             tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
+            '''
             loss = model.loss(feats, masks, tags)
             loss.backward()
             optimizer.step()
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        acc = dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_f)
+        acc = dev(model, dev_loader, epoch, config, domain_id, acc_f)
         
         save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
-def dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_f):
+def dev(model, dev_loader, epoch, config, domain_id, acc_f):
     model.eval()
     eval_loss = 0
     true = []
@@ -306,14 +317,21 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_
         inputs, masks, tags = batch
         length += inputs.size(0)
         inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
+        domain_mask = torch.ones(inputs.size(0), 2).long()
         if config.use_cuda:
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
             domain_id = domain_id.cuda()
-        feats = model(inputs, domain_id, masks)
+            domain_mask = domain_mask.cuda()
+
+        inputs = torch.cat((inputs, domain_id), 1)  # [batch_size, seq_len+2]
+        masks_with_domain = torch.cat((masks, domain_mask), 1)
+        feats = model(inputs, masks_with_domain)
+        '''
         masks[tags == label_list.index('<start>')] = 0
         masks[tags == label_list.index('<eos>')] = 0
         tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
         tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
+        '''
         path_score, best_path = model.crf(feats, masks.byte())
         #loss = model.loss(feats, masks, tags)
         #eval_loss += loss.item()

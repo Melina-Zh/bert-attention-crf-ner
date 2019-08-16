@@ -10,7 +10,7 @@ class Config(object):
         self.vocab = './data/bert/vocab.txt'
         self.domain_file = './model/domain_word.txt'
         self.max_length = 42
-        self.use_cuda = True
+        self.use_cuda = False
         self.gpu = 0
         self.batch_size = 64
         self.bert_path = './data/bert'

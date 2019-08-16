@@ -27,7 +27,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         self.liner = nn.Linear(d_model, tagset_size)
 
 
-    def forward(self, input_ids, domain_id, attention_mask=None):
+    def forward(self, input_ids, attention_mask=None):
         '''
         args:
             sentence (word_seq_len, batch_size) : word-level representation of sentence
@@ -36,14 +36,15 @@ class BERT_ATTENTION_CRF(nn.Module):
         return:
             crf output (word_seq_len, batch_size, tag_size, tag_size), hidden
         '''
-        domain_embeds, _ = self.bert(domain_id, output_all_encoded_layers=False)
-        embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
 
+        embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
+        domain_embeds = embeds[:, -2, :]
         batch_size = input_ids.size(0)
         seq_length = input_ids.size(1)
         W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         #print("domain_shape:")
         #print(torch.Tensor(domain_embeds).shape)
+        embeds = embeds[:, :-2, :]
         attention_out = self.attn_layer(domain_embeds, embeds, embeds)
         hidden = embeds + F.relu(torch.bmm(attention_out, W)+torch.bmm(embeds, W))
         #print("hidden"+str(hidden.shape))
@@ -53,7 +54,7 @@ class BERT_ATTENTION_CRF(nn.Module):
         #print("before liner"+str(out.shape))
         feats = self.liner(out)
         #print("after liner" + str(feats.shape))
-        feats_out = feats.contiguous().view(batch_size, seq_length, -1)
+        feats_out = feats.contiguous().view(batch_size, seq_length-2, -1)
 
         return feats_out
 
