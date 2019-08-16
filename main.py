@@ -232,14 +232,14 @@ def train(**kwargs):
 
     '''
     domain part
-    '''
+    
     domain_f = open(config.domain_file, "r")
     domain_list = []
     for i in domain_f:
         domain_list.append(i)
     domain_no_sep = tokenizer.convert_tokens_to_ids(domain_list)
     domain_no_sep = torch.LongTensor(domain_no_sep)
-
+    '''
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
     all_input_mask = torch.LongTensor([f.mask for f in train_features])
@@ -268,11 +268,11 @@ def train(**kwargs):
             model.zero_grad()
             inputs, masks, tags = batch
             inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
-            domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
+            #domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
             if config.use_cuda:
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-                domain_id = domain_id.cuda()
-            feats = model(inputs, domain_id, masks)
+             #   domain_id = domain_id.cuda()
+            feats = model(inputs, masks)
           
             '''
             masks[tags == label_list.index('<start>')] = 0
@@ -286,14 +286,14 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        acc = dev(model, dev_loader, epoch, config, domain_no_sep, acc_f)
+        acc = dev(model, dev_loader, epoch, config, acc_f)
         
         save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
-def dev(model, dev_loader, epoch, config, domain_no_sep, acc_f):
+def dev(model, dev_loader, epoch, config, acc_f):
     model.eval()
     eval_loss = 0
     true = []
@@ -305,11 +305,11 @@ def dev(model, dev_loader, epoch, config, domain_no_sep, acc_f):
         inputs, masks, tags = batch
         length += inputs.size(0)
         inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
-        domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
+
         if config.use_cuda:
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
-            domain_id = domain_id.cuda()
-        feats = model(inputs, domain_id, masks)
+
+        feats = model(inputs, masks)
         '''
         masks[tags == label_list.index('<start>')] = 0
         masks[tags == label_list.index('<eos>')] = 0
