@@ -298,14 +298,14 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        acc = dev(model, dev_loader, epoch, config, domain_id, acc_f)
+        acc = dev(model, dev_loader, epoch, config, domain_with_sep, acc_f)
         
         save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
-def dev(model, dev_loader, epoch, config, domain_id, acc_f):
+def dev(model, dev_loader, epoch, config, domain_with_sep, acc_f):
     model.eval()
     eval_loss = 0
     true = []
@@ -317,6 +317,8 @@ def dev(model, dev_loader, epoch, config, domain_id, acc_f):
         inputs, masks, tags = batch
         length += inputs.size(0)
         inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
+        domain_id = Variable(domain_with_sep)
+        domain_id = domain_id.expand(inputs.size(0), 2)
         domain_mask = torch.ones(inputs.size(0), 2).long()
         if config.use_cuda:
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
