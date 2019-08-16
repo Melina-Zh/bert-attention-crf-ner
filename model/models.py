@@ -18,9 +18,11 @@ class Attention(nn.Module):
     def forward(self, q, k, v, mask=None):
         #print(k.shape)
         #print(q.shape)
-        batch_size=k.size(0)
-        W=self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
-        U=self.U.weight.unsqueeze(0).expand(1, self.d_model, self.d_model)
+        batch_size = k.size(0)
+        seq_len = k.size(1)
+        q = q.expand(1, seq_len, self.d_model)
+        W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
+        U = self.U.weight.unsqueeze(0).expand(1, self.d_model, self.d_model)
         fac1 = torch.bmm(k, W)
         fac2 = torch.bmm(q, U)
 

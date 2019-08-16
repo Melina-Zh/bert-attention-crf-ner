@@ -37,6 +37,7 @@ class BERT_ATTENTION_CRF(nn.Module):
             crf output (word_seq_len, batch_size, tag_size, tag_size), hidden
         '''
         domain_embeds, _ = self.bert(domain_id, output_all_encoded_layers=False)
+
         embeds, _ = self.bert(input_ids, attention_mask=attention_mask, output_all_encoded_layers=False)
 
         batch_size = input_ids.size(0)
@@ -64,7 +65,7 @@ class BERT_ATTENTION_CRF(nn.Module):
             tags: size=(batch_size, seq_len)
         :return:
         """
-        print(feats.shape)
+        #print(feats.shape)
         #print(mask.shape)
         #print(tags.shape)
         loss_value = self.crf.neg_log_likelihood_loss(feats, mask, tags)

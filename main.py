@@ -234,11 +234,12 @@ def train(**kwargs):
     domain part
     '''
     domain_f = open(config.domain_file, "r")
-    domain_tokens = []
+    domain_list = []
     for i in domain_f:
-        domain_no_sep = tokenizer.convert_tokens_to_ids(domain_tokens)
-    while len(domain_no_sep) < config.max_length:
-        domain_no_sep.append(0)
+        domain_list.append(i)
+    domain_no_sep = tokenizer.convert_tokens_to_ids(domain_list)
+    domain_no_sep = torch.LongTensor(domain_no_sep)
+
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
     all_input_mask = torch.LongTensor([f.mask for f in train_features])
