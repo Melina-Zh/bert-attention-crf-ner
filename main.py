@@ -261,7 +261,6 @@ def train(**kwargs):
 
     for epoch in range(config.base_epoch):
         step = 0
-        token_idx = 0
         acc_f = open("acc.log", 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
@@ -274,7 +273,6 @@ def train(**kwargs):
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
                 domain_id = domain_id.cuda()
             feats = model(inputs, domain_id, masks)
-            token_idx += inputs.size(0)
           
             '''
             masks[tags == label_list.index('<start>')] = 0
@@ -288,14 +286,14 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        acc = dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_f)
+        acc = dev(model, dev_loader, epoch, config, domain_no_sep, acc_f)
         
         save_model(model, epoch)
     time2 = time.time()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
-def dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_f):
+def dev(model, dev_loader, epoch, config, domain_no_sep, acc_f):
     model.eval()
     eval_loss = 0
     true = []
@@ -307,6 +305,7 @@ def dev(model, dev_loader, epoch, config, domain_id, label_dic, label_list, acc_
         inputs, masks, tags = batch
         length += inputs.size(0)
         inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
+        domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
         if config.use_cuda:
             inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
             domain_id = domain_id.cuda()
