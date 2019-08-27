@@ -292,7 +292,7 @@ def train(**kwargs):
             break
         save_model(model, epoch)
     time2 = time.time()
-    five_r = open("five_res.log", "a")
+    five_r = open("five_res1.log", "a")
     five_r.write("{:.4f}\n".format(acc))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
