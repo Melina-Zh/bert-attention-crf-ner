@@ -266,7 +266,7 @@ def train(**kwargs):
     for epoch in range(config.base_epoch):
         step = 0
         token_idx = 0
-        acc_f = open("acc.log", 'a')
+        acc_f = open(config.acc_f, 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
             step += 1
@@ -299,11 +299,14 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        stop = dev(model, dev_loader, epoch, config, domain_with_sep, acc_f, early_stopping)
+        stop, acc = dev(model, dev_loader, epoch, config, domain_with_sep, acc_f, early_stopping)
         if stop:
             break
         save_model(model, epoch)
     time2 = time.time()
+    five_r = open("five_res2.log",'a')
+    five_r.write("{:4f}\n".format(acc))
+    five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
@@ -358,7 +361,7 @@ def dev(model, dev_loader, epoch, config, domain_with_sep, acc_f, early_stopping
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
     model.train()
-    return stop
+    return stop, correct_sum/tags_len
 
 
 if __name__ == '__main__':

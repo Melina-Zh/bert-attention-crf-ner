@@ -12,6 +12,7 @@ class Config(object):
         self.max_length = 42
         self.use_cuda = True
         self.patience = 3
+        self.acc_f = "att3.log"
         self.gpu = 0
         self.batch_size = 64
         self.bert_path = './data/bert'
