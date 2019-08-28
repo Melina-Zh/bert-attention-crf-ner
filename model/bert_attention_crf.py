@@ -10,12 +10,12 @@ import numpy as np
 import ipdb
 
 
-class BERT_ATTENTION_CRF(nn.Module):
+class BERT_CRF(nn.Module):
     """
-    bert_attention_crf model
+    bert-crf model
     """
     def __init__(self, bert_config, tagset_size, embedding_dim, d_model, dropout_ratio, dropout1, use_cuda=False):
-        super(BERT_ATTENTION_CRF, self).__init__()
+        super(BERT_CRF, self).__init__()
         self.embedding_dim = embedding_dim
         self.bert = BertModel.from_pretrained(bert_config)
         self.tagset_size = tagset_size
