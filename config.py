@@ -22,7 +22,7 @@ class Config(object):
         self.lr = 0.00002
         self.lr_decay = 0.00001
         self.weight_decay = 0.00005
-        self.checkpoint = 'result/'
+        self.checkpoint = 'result/DA_BERT_pair_EDR_CRF'
         self.optim = 'Adam'
         self.load_model = False
         self.load_path = None

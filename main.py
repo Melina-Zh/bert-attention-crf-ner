@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 import fire
 import logging
 from pytorch_pretrained_bert.tokenization import BertTokenizer
-from model.bert_attention_crf import BERT_ATTENTION_CRF
+from model.bert_attention_crf import DA_BERT_pair_EDR_CRF
 import os
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
@@ -203,7 +203,7 @@ def train(**kwargs):
     train_loader = DataLoader(train_dataset, shuffle=True, batch_size=config.batch_size)
     '''
 
-    model = BERT_ATTENTION_CRF(config.bert_path, tagset_size, config.bert_embedding, config.bert_embedding, dropout_ratio=config.dropout_ratio, dropout1=config.dropout1, use_cuda=config.use_cuda)
+    model = DA_BERT_pair_EDR_CRF(config.bert_path, tagset_size, config.bert_embedding, config.bert_embedding, dropout_ratio=config.dropout_ratio, dropout1=config.dropout1, use_cuda=config.use_cuda)
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     processor = NerProcessor()
@@ -262,7 +262,7 @@ def train(**kwargs):
 
     for epoch in range(config.base_epoch):
         step = 0
-        acc_f = open(config.acc_f, 'a')
+        acc_f = open(config.checkpoint+"acc.log", 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
             step += 1
@@ -290,10 +290,11 @@ def train(**kwargs):
         stop, acc = dev(model, dev_loader, epoch, config, domain_no_sep, acc_f, early_stopping)
         if stop:
             break
-        save_model(model, epoch)
+
     time2 = time.time()
-    five_r = open("five_res1.log", "a")
-    five_r.write("{:.4f}\n".format(acc))
+    model = load_model(model, path=config.checkpoint, name=config.load_path)
+    five_r = open(config.checkpoint + "five_res.log", 'a')
+    five_r.write("{:.4f}\n".format(test(model, dev_loader, config, domain_no_sep)))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
@@ -333,7 +334,7 @@ def dev(model, dev_loader, epoch, config, domain_no_sep, acc_f, early_stopping):
         correct_sum += correct
         tags_len += tags.size(0)*tags.size(1)
 
-    early_stopping(eval_loss, model)
+    early_stopping(eval_loss, model, epoch)
 
     if early_stopping.early_stop:
         print("Early stopping")
@@ -342,9 +343,48 @@ def dev(model, dev_loader, epoch, config, domain_no_sep, acc_f, early_stopping):
     acc_f.close()
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
+    save_model(model, epoch)
     model.train()
     return stop, correct_sum/tags_len
 
+def test(model, dev_loader, config, domain_no_sep):
+    model.eval()
+    eval_loss = 0
+    true = []
+    pred = []
+    length = 0
+    tags_len = 0
+    correct_sum = 0
+    stop = 0
+    for i, batch in enumerate(dev_loader):
+        inputs, masks, tags = batch
+        length += inputs.size(0)
+        inputs, masks, tags = Variable(inputs), Variable(masks), Variable(tags)
+        domain_id = torch.LongTensor(domain_no_sep).view(1, len(domain_no_sep))
+        if config.use_cuda:
+            inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
+            domain_id = domain_id.cuda()
+        feats = model(inputs, domain_id, masks)
+        '''
+        masks[tags == label_list.index('<start>')] = 0
+        masks[tags == label_list.index('<eos>')] = 0
+        tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
+        tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
+        '''
+        path_score, best_path = model.crf(feats, masks.byte())
+        loss = model.loss(feats, masks, tags)
+        eval_loss += loss.item()
+        pred.extend([t for t in best_path])
+        true.extend([t for t in tags])
+
+        correct = best_path.eq(tags).double()
+        correct = int(correct.sum())
+        correct_sum += correct
+        tags_len += tags.size(0)*tags.size(1)
+
+    print("acc: {:.4f}".format(correct_sum/tags_len))
+
+    return correct_sum/tags_len
 
 if __name__ == '__main__':
     #fire.Fire()
