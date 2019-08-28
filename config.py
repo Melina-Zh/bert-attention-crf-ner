@@ -29,7 +29,11 @@ class Config(object):
         self.base_epoch = 100
 
     def update(self, **kwargs):
+        print("yunxingdao zheli")
+        print(kwargs.items())
         for k, v in kwargs.items():
+            print("k和v的值")
+            print(k,v)
             setattr(self, k, v)
 
     def __str__(self):

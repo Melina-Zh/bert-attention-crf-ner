@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 from config import Config
-from model import bert_attention_crf
 import torch.optim as optim
 from utils import load_vocab, read_corpus, load_model, save_model, EarlyStopping
 from torch.utils.data import TensorDataset
@@ -388,8 +387,8 @@ def test(model, dev_loader, config):
     return correct_sum / tags_len
 
 if __name__ == '__main__':
-    #fire.Fire()
-    train()
+    fire.Fire()
+
 
 
 
