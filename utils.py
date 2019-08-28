@@ -25,13 +25,15 @@ class EarlyStopping:
         self.early_stop = False
         self.val_loss_min = np.Inf
         self.delta = delta
+        self.best_epoch = 0
 
-    def __call__(self, val_loss, model):
+    def __call__(self, val_loss, model, epoch):
 
         score = -val_loss
 
         if self.best_score is None:
             self.best_score = score
+            self.best_epoch = epoch
             #self.save_checkpoint(val_loss, model)
         elif score < self.best_score - self.delta:
             self.counter += 1
@@ -40,6 +42,7 @@ class EarlyStopping:
                 self.early_stop = True
         else:
             self.best_score = score
+            self.best_epoch = epoch
             #self.save_checkpoint(val_loss, model)
             self.counter = 0
 
@@ -101,7 +104,7 @@ def read_corpus(path, max_length, label_dic, vocab):
     return result
 
 
-def save_model(model, epoch, path='result', **kwargs):
+def save_model(model, epoch, best_epoch, path='result', **kwargs):
     """
     默认保留所有模型
     :param model: 模型
@@ -119,9 +122,10 @@ def save_model(model, epoch, path='result', **kwargs):
         full_name = os.path.join(path, name)
         torch.save(model.state_dict(), full_name)
         print('Saved model at epoch {} successfully'.format(epoch))
-        with open('{}/checkpoint'.format(path), 'w') as file:
-            file.write(name)
-            print('Write to checkpoint')
+        if epoch == best_epoch:
+            with open('{}/checkpoint'.format(path), 'w') as file:
+                file.write(name)
+                print('Write to checkpoint')
 
 
 def load_model(model, path='result', **kwargs):
@@ -135,5 +139,3 @@ def load_model(model, path='result', **kwargs):
     model.load_state_dict(torch.load(name, map_location=lambda storage, loc: storage))
     print('load model {} successfully'.format(name))
     return model
-
-

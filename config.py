@@ -12,7 +12,7 @@ class Config(object):
         self.max_length = 42
         self.use_cuda = True
         self.patience = 5
-        self.acc_f = "att3_base.log"
+        self.acc_f = "att_base.log"
         self.gpu = 0
         self.batch_size = 64
         self.bert_path = './data/bert'
@@ -22,7 +22,7 @@ class Config(object):
         self.lr = 0.00002
         self.lr_decay = 0.00001
         self.weight_decay = 0.00005
-        self.checkpoint = 'result/'
+        self.checkpoint = 'result/DA_BERT_CRF'
         self.optim = 'Adam'
         self.load_model = False
         self.load_path = None
