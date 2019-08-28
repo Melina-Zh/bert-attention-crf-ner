@@ -351,7 +351,7 @@ def dev(model, dev_loader, epoch, config, domain_with_sep, acc_f, early_stopping
         correct = int(correct.sum())
         correct_sum += correct
         tags_len += tags.size(0)*tags.size(1)
-    early_stopping(eval_loss, model)
+    early_stopping(eval_loss, model, epoch)
 
     if early_stopping.early_stop:
         print("Early stopping")
