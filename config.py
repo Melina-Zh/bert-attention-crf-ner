@@ -11,7 +11,7 @@ class Config(object):
         self.domain_file = './model/domain_word.txt'
         self.max_length = 42
         self.use_cuda = True
-        self.patience = 5
+        self.patience = 6
         self.acc_f = "att3.log"
         self.gpu = 0
         self.batch_size = 64
