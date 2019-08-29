@@ -31,6 +31,10 @@ def preprossor(filename,output):
                 labels.append('O')
         out.write(' '.join(text)+"|||"+' '.join(labels)+'\n')
     out.close()
-preprossor("14semeval_rest_train.txt","14semeval_rest_train_set.txt")
-preprossor("14semeval_rest_test.txt","14semeval_rest_test_set.txt")
-    
+#preprossor("14semeval_rest_train.txt","14semeval_rest_train_set.txt")
+#preprossor("14semeval_rest_test.txt","14semeval_rest_test_set.txt")
+preprossor("14semeval_laptop_train.txt","14semeval_laptop_train_set.txt")
+preprossor("16semeval_rest_test.txt","16semeval_rest_test_set.txt")
+preprossor("16semeval_rest_train.txt","16semeval_rest_train_set.txt")
+preprossor("14semeval_laptop_test.txt","14semeval_laptop_test_set.txt")
+
