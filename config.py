@@ -4,8 +4,8 @@
 class Config(object):
     def __init__(self):
         self.label_file = './data/tag.txt'
-        self.train_file = './data/dataset/14semeval_laptop_train_set.txt'
-        self.dev_file = './data/dataset/14semeval_laptop_test_set.txt'
+        self.train_file = './data/dataset/16semeval_laptop_train_set.txt'
+        self.dev_file = './data/dataset/16semeval_laptop_test_set.txt'
         self.test_file = './data/test.txt'
         self.vocab = './data/bert/vocab.txt'
         self.domain_file = './model/domain_word.txt'
