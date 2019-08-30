@@ -65,7 +65,7 @@ class DA_BERT_EDR_CRF(nn.Module):
             tags: size=(batch_size, seq_len)
         :return:
         """
-        print(feats.shape)
+        #print(feats.shape)
         #print(mask.shape)
         #print(tags.shape)
         loss_value = self.crf.neg_log_likelihood_loss(feats, mask, tags)
