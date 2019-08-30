@@ -34,7 +34,7 @@ def preprossor(filename,output):
 #preprossor("14semeval_rest_train.txt","14semeval_rest_train_set.txt")
 #preprossor("14semeval_rest_test.txt","14semeval_rest_test_set.txt")
 preprossor("14semeval_laptop_train.txt","14semeval_laptop_train_set.txt")
-preprossor("16semeval_rest_test.txt","16semeval_rest_test_set.txt")
-preprossor("16semeval_rest_train.txt","16semeval_rest_train_set.txt")
+preprossor("15semeval_rest_test.txt","15semeval_rest_test_set.txt")
+preprossor("15semeval_rest_train.txt","15semeval_rest_train_set.txt")
 preprossor("14semeval_laptop_test.txt","14semeval_laptop_test_set.txt")
 
