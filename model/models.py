@@ -22,12 +22,17 @@ class Attention(nn.Module):
         seq_len = k.size(1)
         q = q.view(batch_size, 1, self.d_model)
         q = q.expand(batch_size, seq_len, self.d_model)
+
         W = self.W.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
+        step1 = torch.bmm(W, k.transpose(1, 2))
+        s = torch.bmm(step1, q)
+        '''
         U = self.U.weight.unsqueeze(0).expand(batch_size, self.d_model, self.d_model)
         fac1 = torch.bmm(k, W)
         fac2 = torch.bmm(q, U)
 
         s = torch.bmm(v.transpose(1, 2), self.tanh(fac1 + fac2))
+        '''
 
         attn = self.softmax(s)
         attn = self.dropout(attn)

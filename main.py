@@ -265,7 +265,7 @@ def train(**kwargs):
     for epoch in range(config.base_epoch):
         step = 0
         token_idx = 0
-        acc_f = open(config.checkpoint+"acc.log", 'a')
+        acc_f = open("acc.log", 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):
             batch = tuple(t.to(device) for t in batch)
             step += 1
@@ -411,6 +411,7 @@ def test(model, dev_loader, config, domain_with_sep):
 
 if __name__ == '__main__':
     fire.Fire()
+
 
 
 
