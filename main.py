@@ -305,8 +305,9 @@ def train(**kwargs):
 
     time2 = time.time()
     model = load_model(model, path=config.checkpoint, name=config.load_path)
+    final_acc, f1 = test(model, dev_loader, config, domain_with_sep)
     five_r = open(config.checkpoint+"five_res.log", 'a')
-    five_r.write("{:.4f}\n".format(test(model, dev_loader, config, domain_with_sep)))
+    five_r.write("{:.4f} {:.4f}\n".format(final_acc, f1))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
@@ -373,6 +374,9 @@ def test(model, dev_loader, config, domain_with_sep):
     length = 0
     tags_len = 0
     correct_sum = 0
+    hits = 0
+    fp = 0
+    fn = 0
 
     for i, batch in enumerate(dev_loader):
         inputs, masks, tags = batch
@@ -406,9 +410,30 @@ def test(model, dev_loader, config, domain_with_sep):
         correct_sum += correct
         tags_len += tags.size(0)*tags.size(1)
 
-    print("acc: {:.4f}".format(correct_sum/tags_len))
+        best_path_2 = best_path.clone()
+        tags_2 = tags.clone()
+        best_path_2[best_path_2 != 2] = 0
+        tags_2[best_path_2 == 0] = 0
+        num = len(tags_2[tags_2 == 0])
+        hit_2 = tags_2.eq(best_path_2).sum() - num
 
-    return correct_sum/tags_len
+        best_path_3 = best_path.clone()
+        tags_3 = tags.clone()
+        best_path_3[best_path_3 != 3] = 0
+        tags_3[best_path_3 == 0] = 0
+        num = len(tags_3[tags_3 == 0])
+        hit_3 = tags_3.eq(best_path_3).sum() - num
+        hits += hit_2 + hit_3
+
+        fp += len(best_path[best_path == 2]) + len(best_path[best_path == 3]) - hit_2 - hit_3
+        fn += len(tags[tags == 2]) + len(tags[tags == 3]) - hit_2 - hit_3
+
+    p = float(hits) / float(hits + fp + 0.0001)
+    r = float(hits) / float(hits + fn + 0.0001)
+
+    print("acc: {:.4f}".format(correct_sum / tags_len))
+    f1 = 2 * p * r / (p + r + 0.0001)
+    return correct_sum / tags_len, f1
 
 if __name__ == '__main__':
     fire.Fire()
