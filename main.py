@@ -351,6 +351,30 @@ def dev(model, dev_loader, epoch, config, domain_with_sep, acc_f, early_stopping
         correct = int(correct.sum())
         correct_sum += correct
         tags_len += tags.size(0)*tags.size(1)
+        
+        best_path_2 = best_path.clone()
+        tags_2 = tags.clone()
+        best_path_2[best_path_2 != 2] = 0
+        tags_2[best_path_2 == 0] = 0
+        num = len(tags_2[tags_2 == 0])
+        hit_2 = tags_2.eq(best_path_2).sum() - num
+  
+        best_path_3 = best_path.clone()
+        tags_3 = tags.clone()
+        best_path_3[best_path_3 != 3] = 0
+        tags_3[best_path_3 == 0] = 0
+        num = len(tags_3[tags_3 == 0])
+        hit_3 = tags_3.eq(best_path_3).sum() - num
+        hits += hit_2 + hit_3
+
+        fp += len(best_path[best_path == 2]) + len(best_path[best_path == 3]) - hit_2 - hit_3
+        fn += len(tags[tags == 2]) + len(tags[tags == 3]) - hit_2 - hit_3
+
+    p = float(hits) / float(hits + fp + 0.0001)
+    r = float(hits) / float(hits + fn + 0.0001)
+
+    f1 = 2*p*r/(p+r+0.0001)
+    print("f1: {:.4f}".format(f1))
 
     early_stopping(eval_loss, model, epoch)
 
