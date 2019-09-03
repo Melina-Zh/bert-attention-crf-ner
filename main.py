@@ -362,7 +362,7 @@ def dev(model, dev_loader, epoch, config, domain_with_sep, acc_f, early_stopping
     acc_f.close()
     print("acc: {:.4f}".format(correct_sum/tags_len))
     print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
-    save_model(model, epoch)
+    save_model(model, epoch, early_stopping.best_epoch, path=config.checkpoint)
     model.train()
     return stop,correct_sum/tags_len
 
