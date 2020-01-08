@@ -18,6 +18,7 @@ import numpy as np
 import time
 from tqdm import tqdm, trange
 logger = logging.getLogger(__name__)
+import conlleval
 
 def readfile(filename):
     '''
@@ -37,6 +38,7 @@ def readfile(filename):
         data.append((sentence, label))
 
     return data
+
 
 class InputFeatures(object):
   """A single set of features of data."""
@@ -97,7 +99,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             input_ids.append(0)
             mask.append(0)
             segment_ids.append(0)
-            label_ids.append(label_map["<pad>"])
+            label_ids.append(0)
             ntokens.append("[PAD]")
         assert len(input_ids) == max_seq_length
         assert len(mask) == max_seq_length
@@ -161,7 +163,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["<pad>", "O", "B-AP", "I-AP", "X", "<start>", "<eos>"]
+        return ["O", "B-AP", "I-AP", "X", "<start>", "<eos>"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -178,6 +180,35 @@ class NerProcessor():
         return examples
 
 
+def result_to_pair(writer, predict_examples, result, label_list):
+    for predict_line, prediction in zip(predict_examples, result):
+        idx = 0
+        line = ''
+        line_token = str(predict_line.text).split(' ')
+        label_token = str(predict_line.label).split(' ')
+        len_seq = len(label_token)
+        if len(line_token) != len(label_token):
+            logger.info(predict_line.text)
+            logger.info(predict_line.label)
+            break
+        for id in prediction:
+            if idx >= len_seq:
+                break
+            if id == 0:
+                continue
+            curr_labels = label_list[id]
+            if curr_labels in ['[CLS]', '[SEP]']:
+                continue
+            try:
+                line += line_token[idx] + ' ' + label_token[idx] + ' ' + curr_labels + '\n'
+            except Exception as e:
+                logger.info(e)
+                logger.info(predict_line.text)
+                logger.info(predict_line.label)
+                line = ''
+                break
+            idx += 1
+        writer.write(line + '\n')
 
 def train(**kwargs):
     config = Config()
@@ -209,6 +240,8 @@ def train(**kwargs):
     device = torch.device("cuda" if torch.cuda.is_available() and config.use_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     label_list = processor.get_labels()
+    print("label_list[0]:")
+    print(label_list[0])
     num_labels = len(label_list) + 1
     train_examples = processor.get_train_examples(config.train_file)
 
@@ -286,20 +319,20 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        stop, acc = dev(model, dev_loader, epoch, config, acc_f, early_stopping)
+        stop, acc = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list)
         if stop:
             break
 
     time2 = time.time()
     model = load_model(model, path=config.checkpoint, name=config.load_path)
-    final_acc, f1 = test(model, dev_loader, config)
+    final_acc, f1 = test(model, dev_loader, config, dev_examples)
     five_r = open(config.checkpoint+"five_res.log", 'a')
     five_r.write("{:.4f} {:.4f}\n".format(final_acc, f1))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
-def dev(model, dev_loader, epoch, config, acc_f, early_stopping):
+def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list):
     model.eval()
     eval_loss = 0
     true = []
@@ -329,19 +362,20 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping):
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
 
-        correct = best_path.eq(tags).double()
-        correct = int(correct.sum())
-        correct_sum += correct
-        tags_len += tags.size(0)*tags.size(1)
+        with open(config.output_file,"w") as writer:
+            result_to_pair(writer, dev_examples, pred, label_list)
+
+
     early_stopping(eval_loss, model, epoch)
 
     if early_stopping.early_stop:
         print("Early stopping")
         stop = 1
+    eval_result = conlleval.return_report(config.output_file)
+    print(''.join(eval_result))
     acc_f.write("acc: {:.4f}\n".format(correct_sum/tags_len))
     acc_f.close()
-    print("acc: {:.4f}".format(correct_sum/tags_len))
-    print('eval  epoch: {}|  loss: {}'.format(epoch, eval_loss/length))
+
     save_model(model, epoch, early_stopping.best_epoch, path=config.checkpoint)
     model.train()
 
@@ -414,7 +448,7 @@ def test(model, dev_loader, config):
 
 if __name__ == '__main__':
     fire.Fire()
-
+    train()
 
 
 
