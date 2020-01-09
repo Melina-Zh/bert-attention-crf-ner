@@ -240,8 +240,6 @@ def train(**kwargs):
     device = torch.device("cuda" if torch.cuda.is_available() and config.use_cuda else "cpu")
     n_gpu = torch.cuda.device_count()
     label_list = processor.get_labels()
-    print("label_list[0]:")
-    print(label_list[0])
     num_labels = len(label_list) + 1
     train_examples = processor.get_train_examples(config.train_file)
 
@@ -319,18 +317,19 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        stop, acc = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list)
+        stop = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list)
         if stop:
             break
 
     time2 = time.time()
     model = load_model(model, path=config.checkpoint, name=config.load_path)
-    final_acc, f1 = test(model, dev_loader, config, dev_examples)
+    test(model, dev_loader, config, dev_examples, label_list)
     five_r = open(config.checkpoint+"five_res.log", 'a')
-    five_r.write("{:.4f} {:.4f}\n".format(final_acc, f1))
+    five_r.write(test(model, dev_loader, config, dev_examples, label_list))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
+
 
 def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list):
     model.eval()
@@ -338,8 +337,6 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
     true = []
     pred = []
     length = 0
-    tags_len = 0
-    correct_sum = 0
     stop = 0
     for i, batch in enumerate(dev_loader):
         inputs, masks, tags = batch
@@ -362,9 +359,8 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
 
-        with open(config.output_file,"w") as writer:
+        with open(config.output_file, "w") as writer:
             result_to_pair(writer, dev_examples, pred, label_list)
-
 
     early_stopping(eval_loss, model, epoch)
 
@@ -373,26 +369,23 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         stop = 1
     eval_result = conlleval.return_report(config.output_file)
     print(''.join(eval_result))
-    acc_f.write("acc: {:.4f}\n".format(correct_sum/tags_len))
+    acc_f.write(eval_result)
+    acc_f.write("\n")
     acc_f.close()
 
     save_model(model, epoch, early_stopping.best_epoch, path=config.checkpoint)
     model.train()
 
-    return stop, correct_sum/tags_len
+    return stop
 
 
-def test(model, dev_loader, config):
+def test(model, dev_loader, config, dev_examples, label_list):
     model.eval()
     eval_loss = 0
     true = []
     pred = []
     length = 0
-    tags_len = 0
-    correct_sum = 0
-    hits = 0
-    fp = 0
-    fn = 0
+    stop = 0
     for i, batch in enumerate(dev_loader):
         inputs, masks, tags = batch
         length += inputs.size(0)
@@ -414,36 +407,12 @@ def test(model, dev_loader, config):
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
 
-        correct = best_path.eq(tags).double()
-        correct = int(correct.sum())
-        correct_sum += correct
-        tags_len += tags.size(0) * tags.size(1)
+        with open(config.output_file, "w") as writer:
+            result_to_pair(writer, dev_examples, pred, label_list)
 
-        best_path_2 = best_path.clone()
-        tags_2 = tags.clone()
-        best_path_2[best_path_2 != 2] = 0
-        tags_2[best_path_2 == 0] = 0
-        num = len(tags_2[tags_2 == 0])
-        hit_2 = tags_2.eq(best_path_2).sum() - num
-
-        best_path_3 = best_path.clone()
-        tags_3 = tags.clone()
-        best_path_3[best_path_3 != 3] = 0
-        tags_3[best_path_3 == 0] = 0
-        num = len(tags_3[tags_3 == 0])
-        hit_3 = tags_3.eq(best_path_3).sum() - num
-        hits += hit_2 + hit_3
-
-        fp += len(best_path[best_path == 2]) + len(best_path[best_path == 3]) - hit_2 - hit_3
-        fn += len(tags[tags == 2]) + len(tags[tags == 3]) - hit_2 - hit_3
-
-    p = float(hits) / float(hits + fp + 0.0001)
-    r = float(hits) / float(hits + fn + 0.0001)
-
-    print("acc: {:.4f}".format(correct_sum / tags_len))
-    f1 = 2 * p * r / (p + r + 0.0001)
-    return correct_sum / tags_len, f1
-
+    eval_result = conlleval.return_report(config.output_file)
+    print(''.join(eval_result))
+    return eval_result
 
 
 if __name__ == '__main__':
