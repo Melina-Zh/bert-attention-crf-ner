@@ -84,14 +84,14 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         label_ids = []
         ntokens.append("[CLS]")
         segment_ids.append(0)
-        label_ids.append(label_map["<start>"])
+        label_ids.append(label_map["[CLS]"])
         for i, token in enumerate(tokens):
             ntokens.append(token)
             segment_ids.append(0)
             label_ids.append(label_map[labels[i]])
         ntokens.append("[SEP]")
         segment_ids.append(0)
-        label_ids.append(label_map["<eos>"])
+        label_ids.append(label_map["[SEP]"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
         mask = [1] * len(input_ids)
         # use zero to padding and you should
