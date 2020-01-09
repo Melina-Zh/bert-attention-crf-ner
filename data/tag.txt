@@ -2,5 +2,5 @@ O
 B-AP
 I-AP
 X
-<start>
-<eos>
+[CLS]
+[SEP]

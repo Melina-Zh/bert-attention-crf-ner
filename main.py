@@ -163,7 +163,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["O", "B-AP", "I-AP", "X", "<start>", "<eos>"]
+        return ["O", "B-AP", "I-AP", "X", "[CLS]", "[SEP]"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -184,11 +184,11 @@ def result_to_pair(writer, predict_examples, result, label_list):
     for predict_line, prediction in zip(predict_examples, result):
         idx = 0
         line = ''
-        line_token = str(predict_line.text).split(' ')
+        line_token = str(predict_line.text_a).split(' ')
         label_token = str(predict_line.label).split(' ')
         len_seq = len(label_token)
         if len(line_token) != len(label_token):
-            logger.info(predict_line.text)
+            logger.info(predict_line.text_a)
             logger.info(predict_line.label)
             break
         for id in prediction:
@@ -203,7 +203,7 @@ def result_to_pair(writer, predict_examples, result, label_list):
                 line += line_token[idx] + ' ' + label_token[idx] + ' ' + curr_labels + '\n'
             except Exception as e:
                 logger.info(e)
-                logger.info(predict_line.text)
+                logger.info(predict_line.text_a)
                 logger.info(predict_line.label)
                 line = ''
                 break
