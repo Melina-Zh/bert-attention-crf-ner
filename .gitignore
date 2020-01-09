@@ -10,3 +10,5 @@ data/bert/vocab.txt
 train.slurm
 model/__pycache__/*
 result/*
+*.log
+cal.py
