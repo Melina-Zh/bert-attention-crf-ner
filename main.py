@@ -323,9 +323,9 @@ def train(**kwargs):
 
     time2 = time.time()
     model = load_model(model, path=config.checkpoint, name=config.load_path)
-    test(model, dev_loader, config, dev_examples, label_list)
+
     five_r = open(config.checkpoint+"five_res.log", 'a')
-    five_r.write(test(model, dev_loader, config, dev_examples, label_list))
+    five_r.write(''.join(test(model, dev_loader, config, dev_examples, label_list)))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
@@ -369,7 +369,7 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         stop = 1
     eval_result = conlleval.return_report(config.output_file)
     print(''.join(eval_result))
-    acc_f.write(eval_result)
+    acc_f.write(''.join(eval_result))
     acc_f.write("\n")
     acc_f.close()
 
