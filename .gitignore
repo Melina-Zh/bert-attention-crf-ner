@@ -10,3 +10,8 @@ data/bert/vocab.txt
 train.slurm
 model/__pycache__/*
 result/*
+*.log
+cal.py
+train1.slurm
+trainDABERT_EDR_CRF1.sh
+trainattmodel3.sh
