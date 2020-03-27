@@ -93,11 +93,11 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         segment_ids.append(0)
         label_ids.append(label_map["[SEP]"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
-        mask = [1] * len(input_ids)
+        mask = [True] * len(input_ids)
         # use zero to padding and you should
         while len(input_ids) < max_seq_length:
             input_ids.append(0)
-            mask.append(0)
+            mask.append(False)
             segment_ids.append(0)
             label_ids.append(0)
             ntokens.append("[PAD]")
@@ -117,7 +117,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         features.append(
             InputFeatures(
                 input_ids=input_ids,
-                mask=mask.bool(),  #convert int8 to bool
+                mask=mask,  
                 label_ids=label_ids,
             )
         )
