@@ -117,7 +117,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         features.append(
             InputFeatures(
                 input_ids=input_ids,
-                mask=mask,
+                mask=mask.bool(),  #convert int8 to bool
                 label_ids=label_ids,
             )
         )
