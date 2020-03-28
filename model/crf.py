@@ -77,7 +77,7 @@ class CRF(nn.Module):
                 batch_size, tag_size, 1).expand(batch_size, tag_size, tag_size)
             cur_partition = log_sum_exp(cur_values, tag_size)
             mask_idx = mask[idx, :].view(batch_size, 1).expand(batch_size, tag_size)
-            masked_cur_partition = cur_partition.masked_select(mask_idx.byte())
+            masked_cur_partition = cur_partition.masked_select(mask_idx.bool())
             if masked_cur_partition.dim() != 0:
                 mask_idx = mask_idx.contiguous().view(batch_size, tag_size, 1)
                 partition.masked_scatter_(mask_idx.byte(), masked_cur_partition)

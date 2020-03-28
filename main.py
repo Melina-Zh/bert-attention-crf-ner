@@ -106,6 +106,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         assert len(segment_ids) == max_seq_length
         assert len(label_ids) == max_seq_length
         assert len(ntokens) == max_seq_length
+
         if ex_index < 3:
             logging.info("*** Example ***")
             logging.info("guid: %s" % (example.guid))
@@ -255,7 +256,7 @@ def train(**kwargs):
     logger.info("  Batch size = %d", config.batch_size)
 
     dev_ids = torch.LongTensor([temp.input_ids for temp in dev_features])
-    dev_masks = torch.BoolTensor([temp.mask.bool() for temp in dev_features])
+    dev_masks = torch.LongTensor([temp.mask for temp in dev_features])
     dev_tags = torch.LongTensor([temp.label_ids for temp in dev_features])
 
     dev_dataset = TensorDataset(dev_ids, dev_masks, dev_tags)
@@ -273,7 +274,7 @@ def train(**kwargs):
     '''
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
-    all_input_mask = torch.BoolTensor([f.mask.bool() for f in train_features])
+    all_input_mask = torch.LongTensor([f.mask for f in train_features])
     all_label_ids = torch.LongTensor([f.label_ids for f in train_features])
 
     train_data = TensorDataset(all_input_ids, all_input_mask, all_label_ids)
