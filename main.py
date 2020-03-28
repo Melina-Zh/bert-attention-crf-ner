@@ -19,7 +19,8 @@ import time
 from tqdm import tqdm, trange
 logger = logging.getLogger(__name__)
 import conlleval
-
+import warnings
+warnings.filterwarnings('ignore')
 def readfile(filename):
     '''
     read file
