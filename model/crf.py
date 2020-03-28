@@ -218,7 +218,7 @@ class CRF(nn.Module):
             tags: size=(batch_size, seq_len)
         """
         batch_size = feats.size(0)
-        mask = mask.byte()
+        mask = mask.bool()
         forward_score, scores = self._forward_alg(feats, mask)
         gold_score = self._score_sentence(scores, mask, tags)
         if self.average_batch:
