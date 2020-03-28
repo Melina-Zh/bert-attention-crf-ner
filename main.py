@@ -93,11 +93,11 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         segment_ids.append(0)
         label_ids.append(label_map["[SEP]"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
-        mask = [True] * len(input_ids)
+        mask = [1] * len(input_ids)
         # use zero to padding and you should
         while len(input_ids) < max_seq_length:
             input_ids.append(0)
-            mask.append(False)
+            mask.append(0)
             segment_ids.append(0)
             label_ids.append(0)
             ntokens.append("[PAD]")
@@ -117,7 +117,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         features.append(
             InputFeatures(
                 input_ids=input_ids,
-                mask=mask,  
+                mask=mask,
                 label_ids=label_ids,
             )
         )
@@ -255,7 +255,7 @@ def train(**kwargs):
     logger.info("  Batch size = %d", config.batch_size)
 
     dev_ids = torch.LongTensor([temp.input_ids for temp in dev_features])
-    dev_masks = torch.LongTensor([temp.mask for temp in dev_features])
+    dev_masks = torch.BoolTensor([temp.mask for temp in dev_features])
     dev_tags = torch.LongTensor([temp.label_ids for temp in dev_features])
 
     dev_dataset = TensorDataset(dev_ids, dev_masks, dev_tags)
@@ -273,7 +273,7 @@ def train(**kwargs):
     '''
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
-    all_input_mask = torch.LongTensor([f.mask for f in train_features])
+    all_input_mask = torch.BoolTensor([f.mask for f in train_features])
     all_label_ids = torch.LongTensor([f.label_ids for f in train_features])
 
     train_data = TensorDataset(all_input_ids, all_input_mask, all_label_ids)
@@ -417,6 +417,7 @@ def test(model, dev_loader, config, dev_examples, label_list):
 
 if __name__ == '__main__':
     fire.Fire()
+    train()
 
 
 

@@ -10,7 +10,7 @@ class Config(object):
         self.vocab = './data/bert/vocab.txt'
         self.domain_file = './model/domain_word.txt'
         self.max_length = 42
-        self.use_cuda = True
+        self.use_cuda = False
         self.patience = 7
         self.acc_f = "att_base.log"
         self.gpu = 0
