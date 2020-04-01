@@ -80,7 +80,7 @@ class CRF(nn.Module):
             masked_cur_partition = cur_partition.masked_select(mask_idx.bool())
             if masked_cur_partition.dim() != 0:
                 mask_idx = mask_idx.contiguous().view(batch_size, tag_size, 1)
-                partition.masked_scatter_(mask_idx.byte(), masked_cur_partition)
+                partition.masked_scatter_(mask_idx.bool(), masked_cur_partition)
         cur_values = self.transitions.view(1, tag_size, tag_size).expand(
             batch_size, tag_size, tag_size) + partition.contiguous().view(
                 batch_size, tag_size, 1).expand(batch_size, tag_size, tag_size)
@@ -116,7 +116,7 @@ class CRF(nn.Module):
         # record the position of the best score
         back_points = list()
         partition_history = list()
-        mask = (1 - mask.long()).byte()
+        mask = (1 - mask.long()).bool()
         try:
             _, inivalues = seq_iter.__next__()
         except:
@@ -129,7 +129,6 @@ class CRF(nn.Module):
                 batch_size, tag_size, 1).expand(batch_size, tag_size, tag_size)
             partition, cur_bp = torch.max(cur_values, 1)
             partition_history.append(partition.unsqueeze(-1))
-
             cur_bp.masked_fill_(mask[idx].view(batch_size, 1).expand(batch_size, tag_size), 0)
             back_points.append(cur_bp)
 

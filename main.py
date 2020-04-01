@@ -1,4 +1,16 @@
 # coding=utf-8
+# import warnings
+# import traceback
+# import sys
+
+# def warn_with_traceback(message, category, filename, lineno, fil=None, line=None):
+#     log = file if hasattr(file, 'write') else sys.stderr
+#     trackback.print_stack(file=log)
+#     log.write(warnings.formatwarning(message, category, filename, lineno, oine))
+
+# warnings.showwarning = warn_with_traceback
+# warnings.simplefilter("error")
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -93,11 +105,11 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         segment_ids.append(0)
         label_ids.append(label_map["[SEP]"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
-        mask = [1] * len(input_ids)
+        mask = [True] * len(input_ids)
         # use zero to padding and you should
         while len(input_ids) < max_seq_length:
             input_ids.append(0)
-            mask.append(0)
+            mask.append(False)
             segment_ids.append(0)
             label_ids.append(0)
             ntokens.append("[PAD]")
@@ -256,7 +268,7 @@ def train(**kwargs):
     logger.info("  Batch size = %d", config.batch_size)
 
     dev_ids = torch.LongTensor([temp.input_ids for temp in dev_features])
-    dev_masks = torch.LongTensor([temp.mask for temp in dev_features])
+    dev_masks = torch.BoolTensor([temp.mask for temp in dev_features])
     dev_tags = torch.LongTensor([temp.label_ids for temp in dev_features])
 
     dev_dataset = TensorDataset(dev_ids, dev_masks, dev_tags)
@@ -274,7 +286,7 @@ def train(**kwargs):
     '''
 
     all_input_ids = torch.LongTensor([f.input_ids for f in train_features])
-    all_input_mask = torch.LongTensor([f.mask for f in train_features])
+    all_input_mask = torch.BoolTensor([f.mask for f in train_features])
     all_label_ids = torch.LongTensor([f.label_ids for f in train_features])
 
     train_data = TensorDataset(all_input_ids, all_input_mask, all_label_ids)
@@ -305,7 +317,7 @@ def train(**kwargs):
                 inputs, masks, tags = inputs.cuda(), masks.cuda(), tags.cuda()
              #   domain_id = domain_id.cuda()
             feats = model(inputs, masks)
-          
+         
             '''
             masks[tags == label_list.index('<start>')] = 0
             masks[tags == label_list.index('<eos>')] = 0
