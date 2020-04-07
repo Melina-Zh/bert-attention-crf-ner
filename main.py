@@ -58,11 +58,12 @@ class InputFeatures(object):
   def __init__(self,
                input_ids,
                mask,
+               segment_ids,
                label_ids,
                is_real_example=True):
     self.input_ids = input_ids
     self.mask = mask
-    #self.segment_ids = segment_ids
+    self.segment_ids = segment_ids
     self.label_ids = label_ids
     self.is_real_example = is_real_example
 
@@ -74,11 +75,13 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
     features = []
     all_tokens=[]
     for (ex_index, example) in enumerate(examples):
-        textlist = example.text_a.split(' ')
+        query_tokens = tokenizer.tokenize(example.text_a)
+        textlist = example.text_b.split(' ')
         labellist = example.label
         tokens = []
         labels = []
 
+        max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
         label_mask = []
         for i, (word, label) in enumerate(zip(textlist, labellist)):
             token = tokenizer.tokenize(word)
@@ -88,21 +91,27 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
                     labels.append(label)
                 else:
                     labels.append("X")
-        if len(tokens) >= max_seq_length - 2:
-            tokens = tokens[0:(max_seq_length - 2)] # [CLS] and [SEP]
-            labels = labels[0:(max_seq_length - 2)]
+        if len(tokens) >= max_tokens_for_doc:
+            tokens = tokens[0:max_tokens_for_doc] # [CLS] and [SEP]
+            labels = labels[0:max_tokens_for_doc]
         ntokens = []
         segment_ids = []
         label_ids = []
         ntokens.append("[CLS]")
         segment_ids.append(0)
-        label_ids.append(label_map["[CLS]"])
-        for i, token in enumerate(tokens):
+        for token in query_tokens: #query
             ntokens.append(token)
             segment_ids.append(0)
-            label_ids.append(label_map[labels[i]])
         ntokens.append("[SEP]")
         segment_ids.append(0)
+
+        label_ids.append(label_map["[SEP]"])
+        for i, token in enumerate(tokens):
+            ntokens.append(token)
+            segment_ids.append(1)
+            label_ids.append(label_map[labels[i]])
+        ntokens.append("[SEP]")
+        segment_ids.append(1)
         label_ids.append(label_map["[SEP]"])
         input_ids = tokenizer.convert_tokens_to_ids(ntokens)
         mask = [True] * len(input_ids)
@@ -131,6 +140,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             InputFeatures(
                 input_ids=input_ids,
                 mask=mask,
+                segment_ids=segment_ids,
                 label_ids=label_ids,
             )
         )
@@ -184,10 +194,12 @@ class NerProcessor():
 
     def _create_examples(self, lines, set_type):
         examples = []
+        with open("../model/domain_word.txt","r") as f:
+            domain = f.readline()
         for i, (sentence, label) in enumerate(lines):
             guid = "%s-%s" % (set_type, i)
-            text_a = ' '.join(sentence)
-            text_b = None
+            text_a = domain
+            text_b = ' '.join(sentence)
             label = label
             examples.append(InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
