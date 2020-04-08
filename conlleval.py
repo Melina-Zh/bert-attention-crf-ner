@@ -74,15 +74,19 @@ def evaluate(iterable, options=None):
     last_guessed_type = ''    # type of previous chunk tag in corpus
 
     for line in iterable:
-        line = line.rstrip('\r\n')
+        line = line.rstrip('\n')
 
         if options.delimiter == ANY_SPACE:
             features = line.split()
         else:
             features = line.split(options.delimiter)
-
+        print(features)
+        #print(num_features)
+        #print(len(features))
         if num_features is None:
             num_features = len(features)
+            print("ok")
+
         elif num_features != len(features) and len(features) != 0:
             raise FormatError('unexpected number of features: %d (%d)' %
                               (len(features), num_features))
@@ -151,6 +155,9 @@ def uniq(iterable):
 
 def calculate_metrics(correct, guessed, total):
     tp, fp, fn = correct, guessed-correct, total-correct
+    #print(tp)
+    #print(fp)
+    #print(fn)
     p = 0 if tp + fp == 0 else 1.*tp / (tp + fp)
     r = 0 if tp + fn == 0 else 1.*tp / (tp + fn)
     f = 0 if p + r == 0 else 2 * p * r / (p + r)

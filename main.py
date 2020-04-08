@@ -194,12 +194,13 @@ class NerProcessor():
 
 
 def result_to_pair(writer, predict_examples, result, label_list):
-    id = 0
+    idx = 0
+
     for predict_line in predict_examples:
 
         line = ''
         line_token = str(predict_line.text_a).split(' ')
-        label_token = str(predict_line.label).split(' ')
+        label_token = predict_line.label
         len_seq = len(label_token)
         if len(line_token) != len(label_token):
             logger.info(predict_line.text_a)
@@ -207,9 +208,9 @@ def result_to_pair(writer, predict_examples, result, label_list):
             break
         for i in range(len_seq):
 
-            if result[id] == 0 or result[id] == 3:
+            if result[idx][i] == 0 or result[idx][i] == 3: #O X
                 continue
-            curr_labels = label_list[result[id]]
+            curr_labels = label_list[result[idx][i]]
             if curr_labels in ['[CLS]', '[SEP]']:
                 continue
             try:
@@ -220,8 +221,9 @@ def result_to_pair(writer, predict_examples, result, label_list):
                 logger.info(predict_line.label)
                 line = ''
                 break
-            id += 1
-        writer.write(line + '\n')
+
+        writer.write(line)
+        idx += 1
         
 def train(**kwargs):
     config = Config()
