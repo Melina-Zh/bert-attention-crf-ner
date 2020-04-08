@@ -193,15 +193,17 @@ class NerProcessor():
         return examples
 
 
-def result_to_pair(writer, predict_examples, result, label_list):
+def result_to_pair(writer, predict_examples, result, label_list, max_length):
     idx = 0
+
 
     for predict_line in predict_examples:
 
         line = ''
         line_token = str(predict_line.text_a).split(' ')
         label_token = predict_line.label
-        len_seq = len(label_token)
+        len_seq = min(len(label_token), max_length)
+
         if len(line_token) != len(label_token):
             logger.info(predict_line.text_a)
             logger.info(predict_line.label)
@@ -375,7 +377,7 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         true.extend([t for t in tags])
 
         with open(config.output_file, "w") as writer:
-            result_to_pair(writer, dev_examples, pred, label_list)
+            result_to_pair(writer, dev_examples, pred, label_list, config.max_length)
 
     early_stopping(eval_loss, model, epoch)
 
