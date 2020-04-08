@@ -194,8 +194,9 @@ class NerProcessor():
 
 
 def result_to_pair(writer, predict_examples, result, label_list):
-    for predict_line, prediction in zip(predict_examples, result):
-        idx = 0
+    id = 0
+    for predict_line in predict_examples:
+
         line = ''
         line_token = str(predict_line.text_a).split(' ')
         label_token = str(predict_line.label).split(' ')
@@ -204,25 +205,24 @@ def result_to_pair(writer, predict_examples, result, label_list):
             logger.info(predict_line.text_a)
             logger.info(predict_line.label)
             break
-        for id in prediction:
-            if idx >= len_seq:
-                break
-            if id == 0:
+        for i in range(len_seq):
+
+            if result[id] == 0 or result[id] == 3:
                 continue
-            curr_labels = label_list[id]
+            curr_labels = label_list[result[id]]
             if curr_labels in ['[CLS]', '[SEP]']:
                 continue
             try:
-                line += line_token[idx] + ' ' + label_token[idx] + ' ' + curr_labels + '\n'
+                line += line_token[i] + ' ' + label_token[i] + ' ' + curr_labels + '\n'
             except Exception as e:
                 logger.info(e)
                 logger.info(predict_line.text_a)
                 logger.info(predict_line.label)
                 line = ''
                 break
-            idx += 1
+            id += 1
         writer.write(line + '\n')
-
+        
 def train(**kwargs):
     config = Config()
     config.update(**kwargs)
