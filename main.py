@@ -196,7 +196,6 @@ class NerProcessor():
 def result_to_pair(writer, predict_examples, result, label_list, max_length):
     idx = 0
 
-
     for predict_line in predict_examples:
 
         line = ''
@@ -376,8 +375,8 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
 
-        with open(config.output_file, "w") as writer:
-            result_to_pair(writer, dev_examples, pred, label_list, config.max_length)
+    with open(config.output_file, "w") as writer:
+        result_to_pair(writer, dev_examples, pred, label_list, config.max_length)
 
     early_stopping(eval_loss, model, epoch)
 
@@ -424,8 +423,8 @@ def test(model, dev_loader, config, dev_examples, label_list):
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
 
-        with open(config.output_file, "w") as writer:
-            result_to_pair(writer, dev_examples, pred, label_list)
+    with open(config.output_file, "w") as writer:
+        result_to_pair(writer, dev_examples, pred, label_list, config.max_length)
 
     eval_result = conlleval.return_report(config.output_file)
     print(''.join(eval_result))
