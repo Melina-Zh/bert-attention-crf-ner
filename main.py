@@ -302,6 +302,7 @@ def train(**kwargs):
     if config.use_cuda:
         model.cuda()
     model.train()
+    print(model.parameters())
     optimizer = getattr(optim, config.optim)
     optimizer = optimizer(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
@@ -433,7 +434,6 @@ def test(model, dev_loader, config, dev_examples, label_list):
 
 if __name__ == '__main__':
     fire.Fire()
-    train()
 
 
 

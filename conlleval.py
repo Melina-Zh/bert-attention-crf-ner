@@ -80,12 +80,12 @@ def evaluate(iterable, options=None):
             features = line.split()
         else:
             features = line.split(options.delimiter)
-        print(features)
+        #print(features)
         #print(num_features)
         #print(len(features))
         if num_features is None:
             num_features = len(features)
-            print("ok")
+            #print("ok")
 
         elif num_features != len(features) and len(features) != 0:
             raise FormatError('unexpected number of features: %d (%d)' %

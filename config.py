@@ -14,12 +14,12 @@ class Config(object):
         self.patience = 7
         self.acc_f = "att_base.log"
         self.gpu = 0
-        self.batch_size = 64
+        self.batch_size = 32
         self.bert_path = './data/bert'
         self.bert_embedding = 768
         self.dropout1 = 0.5
         self.dropout_ratio = 0.5
-        self.lr = 0.00002
+        self.lr = 0.00003
         self.lr_decay = 0.00001
         self.weight_decay = 0.00005
         self.checkpoint = 'result/BERT_CRF/'
