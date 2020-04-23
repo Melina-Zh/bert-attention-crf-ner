@@ -125,7 +125,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
         assert len(input_ids) == max_seq_length
         assert len(mask) == max_seq_length
         assert len(segment_ids) == max_seq_length
-        assert len(label_ids) == max_seq_length
+        #assert len(label_ids) == max_seq_length
         assert len(ntokens) == max_seq_length
 
         if ex_index < 3:
@@ -145,7 +145,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer
             )
         )
         all_tokens.append(ntokens)
-    return features, all_tokens
+    return features, all_tokens, len(query_tokens)
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -194,7 +194,7 @@ class NerProcessor():
 
     def _create_examples(self, lines, set_type):
         examples = []
-        with open("../model/domain_word.txt","r") as f:
+        with open("./model/domain_word.txt", "r") as f:
             domain = f.readline()
         for i, (sentence, label) in enumerate(lines):
             guid = "%s-%s" % (set_type, i)
@@ -268,12 +268,12 @@ def train(**kwargs):
     num_labels = len(label_list) + 1
     train_examples = processor.get_train_examples(config.train_file)
 
-    train_features, train_all_tokens = convert_examples_to_features(
+    train_features, train_all_tokens, domain_len = convert_examples_to_features(
         train_examples, label_list, config.max_length, tokenizer)
 
     dev_examples = processor.get_train_examples(config.dev_file)
 
-    dev_features, dev_all_tokens = convert_examples_to_features(
+    dev_features, dev_all_tokens, domain_len = convert_examples_to_features(
         dev_examples, label_list, config.max_length, tokenizer)
     logger.info("***** Running training *****")
     logger.info("  Num examples = %d", len(train_examples))
@@ -336,13 +336,14 @@ def train(**kwargs):
             tags[tags == label_list.index('<start>')] = label_dic["<pad>"]
             tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
             '''
-            loss = model.loss(feats, masks, tags)
+
+            loss = model.loss(feats[:, domain_len+1:, :], masks[:, domain_len+1:], tags)
             loss.backward()
             optimizer.step()
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        stop = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list)
+        stop = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list, domain_len)
         if stop:
             break
 
@@ -350,13 +351,13 @@ def train(**kwargs):
     model = load_model(model, path=config.checkpoint, name=config.load_path)
 
     five_r = open(config.checkpoint+"five_res.log", 'a')
-    five_r.write(''.join(test(model, dev_loader, config, dev_examples, label_list)))
+    five_r.write(''.join(test(model, dev_loader, config, dev_examples, label_list, domain_len)))
     five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
 
-def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list):
+def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list, domain_len):
     model.eval()
     eval_loss = 0
     true = []
@@ -379,7 +380,7 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
         '''
         path_score, best_path = model.crf(feats, masks.byte())
-        loss = model.loss(feats, masks, tags)
+        loss = model.loss(feats[:, domain_len+1:, :], masks[:, domain_len+1:], tags)
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
@@ -404,7 +405,7 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
     return stop
 
 
-def test(model, dev_loader, config, dev_examples, label_list):
+def test(model, dev_loader, config, dev_examples, label_list, domain_len):
     model.eval()
     eval_loss = 0
     true = []
@@ -427,7 +428,7 @@ def test(model, dev_loader, config, dev_examples, label_list):
         tags[tags == label_list.index('<eos>')] = label_dic["<pad>"]
         '''
         path_score, best_path = model.crf(feats, masks.byte())
-        loss = model.loss(feats, masks, tags)
+        loss = model.loss(feats[:, domain_len+1:, :], masks[:, domain_len+1:], tags)
         eval_loss += loss.item()
         pred.extend([t for t in best_path])
         true.extend([t for t in tags])
