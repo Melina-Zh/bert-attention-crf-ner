@@ -176,7 +176,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["O", "B-AP", "I-AP", "X", "[CLS]", "[SEP]"]
+        return ["B-AP", "I-AP", "O", "X", "[CLS]", "[SEP]"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -209,7 +209,7 @@ def result_to_pair(writer, predict_examples, result, label_list, max_length):
             break
         for i in range(len_seq):
 
-            if result[idx][i] == 0 or result[idx][i] == 3: #O X
+            if result[idx][i] == 2 or result[idx][i] == 3: #O X
                 continue
             curr_labels = label_list[result[idx][i]]
             if curr_labels in ['[CLS]', '[SEP]']:
@@ -302,11 +302,17 @@ def train(**kwargs):
     if config.use_cuda:
         model.cuda()
     model.train()
-
+    # different lr
+    crf_params = list(map(id, model.crf.parameters()))
+    base_params = filter(lambda p: id(p) not in crf_params,
+                         model.parameters())
     optimizer = getattr(optim, config.optim)
-    optimizer = optimizer(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
+    optimizer = optimizer([
+            {'params': base_params},
+            {'params': model.crf.parameters(), 'lr': config.lr * 100}], lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
     print(model.state_dict().keys())
+
     for epoch in range(config.base_epoch):
         step = 0
         acc_f = open(config.checkpoint+"acc.log", 'a')
@@ -434,6 +440,7 @@ def test(model, dev_loader, config, dev_examples, label_list):
 
 if __name__ == '__main__':
     fire.Fire()
+    train()
 
 
 

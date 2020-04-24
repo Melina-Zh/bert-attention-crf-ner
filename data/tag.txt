@@ -1,6 +1,6 @@
-O
 B-AP
 I-AP
+O
 X
 [CLS]
 [SEP]

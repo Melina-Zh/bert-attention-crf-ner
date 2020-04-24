@@ -4,13 +4,13 @@
 class Config(object):
     def __init__(self):
         self.label_file = './data/tag.txt'
-        self.train_file = './data/dataset/14semeval_rest_train_set.txt'
-        self.dev_file = './data/dataset/14semeval_rest_test_set.txt'
+        self.train_file = './data/dataset/test_acc.txt'
+        self.dev_file = './data/dataset/test_acc.txt'
         self.test_file = './data/test.txt'
         self.vocab = './data/bert/vocab.txt'
         self.domain_file = './model/domain_word.txt'
         self.max_length = 42
-        self.use_cuda = True
+        self.use_cuda = False
         self.patience = 7
         self.acc_f = "att_base.log"
         self.gpu = 0
@@ -26,7 +26,7 @@ class Config(object):
         self.optim = 'Adam'
         self.load_model = False
         self.load_path = None
-        self.base_epoch = 100
+        self.base_epoch = 10
         self.output_file = "output_file.log"
 
     def update(self, **kwargs):
