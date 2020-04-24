@@ -302,11 +302,11 @@ def train(**kwargs):
     if config.use_cuda:
         model.cuda()
     model.train()
-    print(model.parameters())
+
     optimizer = getattr(optim, config.optim)
     optimizer = optimizer(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
-
+    print(model.state_dict().keys())
     for epoch in range(config.base_epoch):
         step = 0
         acc_f = open(config.checkpoint+"acc.log", 'a')
