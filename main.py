@@ -314,7 +314,7 @@ def train(**kwargs):
     optimizer = getattr(optim, config.optim)
     optimizer = optimizer(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
-
+    print(model.state_dict().keys())
     for epoch in range(config.base_epoch):
         step = 0
         acc_f = open(config.checkpoint+"acc.log", 'a')
@@ -443,7 +443,6 @@ def test(model, dev_loader, config, dev_examples, label_list, domain_len):
 
 if __name__ == '__main__':
     fire.Fire()
-    train()
 
 
 
