@@ -4,8 +4,8 @@
 class Config(object):
     def __init__(self):
         self.label_file = './data/tag.txt'
-        self.train_file = './data/dataset/test_acc.txt'
-        self.dev_file = './data/dataset/test_acc.txt'
+        self.train_file = './data/dataset/14semeval_rest_train_set_filter.txt'
+        self.dev_file = './data/dataset/14semeval_rest_train_set_filter.txt'
         self.test_file = './data/test.txt'
         self.vocab = './data/bert/vocab.txt'
         self.domain_file = './model/domain_word.txt'
@@ -14,7 +14,7 @@ class Config(object):
         self.patience = 7
         self.acc_f = "att_base.log"
         self.gpu = 0
-        self.batch_size = 32
+        self.batch_size = 64
         self.bert_path = './data/bert'
         self.bert_embedding = 768
         self.dropout1 = 0.5

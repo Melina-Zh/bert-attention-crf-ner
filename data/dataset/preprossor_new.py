@@ -31,10 +31,26 @@ def preprossor(filename,output):
                 labels.append('O')
         out.write(' '.join(text)+"|||"+' '.join(labels)+'\n')
     out.close()
+
+def filter(filename, output):
+    f = open(filename, 'r')
+    out = open(output, 'w')
+    for line in f:
+        flag = 0
+        labelline = line.split("|||")[1]
+        labelline = labelline.strip()
+        labellist = labelline.split(" ")
+        for i in labellist:
+
+            if i != "O":
+                flag = 1
+                break
+        if flag == 1:
+            out.write(line)
+    out.close()
+    f.close()
 #preprossor("14semeval_rest_train.txt","14semeval_rest_train_set.txt")
 #preprossor("14semeval_rest_test.txt","14semeval_rest_test_set.txt")
-preprossor("14semeval_laptop_train.txt","14semeval_laptop_train_set.txt")
-preprossor("15semeval_rest_test.txt","15semeval_rest_test_set.txt")
-preprossor("15semeval_rest_train.txt","15semeval_rest_train_set.txt")
-preprossor("14semeval_laptop_test.txt","14semeval_laptop_test_set.txt")
+filter("16semeval_rest_test_set.txt","16semeval_rest_test_set_filter.txt")
+
 
