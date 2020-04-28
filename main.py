@@ -209,7 +209,7 @@ def result_to_pair(writer, predict_examples, result, label_list, max_length):
             break
         for i in range(len_seq):
 
-            if result[idx][i] == 2 or result[idx][i] == 3: #O X
+            if result[idx][i] == 3: #O X
                 continue
             curr_labels = label_list[result[idx][i]]
             if curr_labels in ['[CLS]', '[SEP]']:

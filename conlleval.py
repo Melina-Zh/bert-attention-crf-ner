@@ -46,7 +46,7 @@ def parse_args(argv):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     arg = parser.add_argument
-    arg('-b', '--boundary', metavar='STR', default='-X-',
+    arg('-b', '--boundary', metavar='CHAR', default='.',
         help='sentence boundary')
     arg('-d', '--delimiter', metavar='CHAR', default=ANY_SPACE,
         help='character delimiting items in input')
