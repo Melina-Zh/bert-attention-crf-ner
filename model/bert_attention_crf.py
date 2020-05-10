@@ -1,6 +1,6 @@
 # coding=utf-8
 import torch.nn as nn
-from pytorch_pretrained_bert import BertModel
+from pytorch_pretrained_bert.modeling import BertModel
 from model import CRF
 from model.models import Attention
 from torch.autograd import Variable
@@ -67,7 +67,6 @@ class BERT_CRF(nn.Module):
         #print(tags.shape)
         loss_value = self.crf.neg_log_likelihood_loss(feats, mask, tags)
         batch_size = feats.size(0)
-        loss_value /= float(batch_size)
         return loss_value
 
 

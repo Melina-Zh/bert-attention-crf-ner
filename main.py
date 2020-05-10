@@ -320,6 +320,7 @@ def train(**kwargs):
     print(model.state_dict().keys())
 
     for epoch in range(config.base_epoch):
+        model.train()
         step = 0
         acc_f = open(config.checkpoint+"acc.log", 'a')
         for i, batch in enumerate(tqdm(train_dataloader, desc="Epoch {} ".format(epoch))):

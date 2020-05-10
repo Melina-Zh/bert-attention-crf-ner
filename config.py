@@ -19,7 +19,7 @@ class Config(object):
         self.bert_embedding = 768
         self.dropout1 = 0.1
         self.dropout_ratio = 0.5
-        self.lr = 0.00005
+        self.lr = 0.00002
         self.lr_decay = 0.00001
         self.weight_decay = 0.00001
         self.checkpoint = 'result/BERT_CRF/'
