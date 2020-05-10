@@ -5,28 +5,28 @@ class Config(object):
     def __init__(self):
         self.label_file = './data/tag.txt'
         self.train_file = './data/dataset/14semeval_rest_train_set_filter.txt'
-        self.dev_file = './data/dataset/14semeval_rest_train_set_filter.txt'
+        self.dev_file = './data/dataset/14semeval_rest_test_set_filter.txt'
         self.test_file = './data/test.txt'
         self.vocab = './data/bert/vocab.txt'
         self.domain_file = './model/domain_word.txt'
-        self.max_length = 42
-        self.use_cuda = False
+        self.max_length = 50
+        self.use_cuda = True
         self.patience = 7
         self.acc_f = "att_base.log"
         self.gpu = 0
-        self.batch_size = 64
+        self.batch_size = 32
         self.bert_path = './data/bert'
         self.bert_embedding = 768
-        self.dropout1 = 0.5
+        self.dropout1 = 0.1
         self.dropout_ratio = 0.5
-        self.lr = 0.00003
+        self.lr = 0.00005
         self.lr_decay = 0.00001
-        self.weight_decay = 0.00005
+        self.weight_decay = 0.00001
         self.checkpoint = 'result/BERT_CRF/'
         self.optim = 'Adam'
         self.load_model = False
         self.load_path = None
-        self.base_epoch = 10
+        self.base_epoch = 300
         self.output_file = "output_file.log"
 
     def update(self, **kwargs):

@@ -176,7 +176,7 @@ class NerProcessor():
             self._read_tsv(os.path.join(data_dir, "test.txt")), "test")
 
     def get_labels(self):
-        return ["B-AP", "I-AP", "O", "X", "[CLS]", "[SEP]"]
+        return ["O", "B-AP", "I-AP", "X", "[CLS]", "[SEP]"]
 
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
@@ -193,39 +193,45 @@ class NerProcessor():
         return examples
 
 
-def result_to_pair(writer, predict_examples, result, label_list, max_length):
+def result_to_pair(writer, dev_features, result, label_list, max_length):
     idx = 0
 
-    for predict_line in predict_examples:
-
+    for each_feature in dev_features:
+        i = 0
         line = ''
-        line_token = str(predict_line.text_a).split(' ')
-        label_token = predict_line.label
-        len_seq = min(len(label_token), max_length)
+        line_token = each_feature.input_ids
+        label_token = each_feature.label_ids
+        len_seq = len(label_token)
 
         if len(line_token) != len(label_token):
-            logger.info(predict_line.text_a)
-            logger.info(predict_line.label)
+            logger.info(each_feature.input_ids)
+            logger.info(each_feature.label_ids)
             break
-        for i in range(len_seq):
+        while label_token[i] != 5: # [SEP]
 
-            if result[idx][i] == 3: #O X
+            if label_token[i] == 3 or label_token[i] == 4: # X [CLS]
+                i += 1
                 continue
+            if result[idx][i] == 3 or result[idx][i] == 4 or result[idx][i] == 5:
+                result[idx][i] = 0
             curr_labels = label_list[result[idx][i]]
-            if curr_labels in ['[CLS]', '[SEP]']:
-                continue
+
             try:
-                line += line_token[i] + ' ' + label_token[i] + ' ' + curr_labels + '\n'
+                line += str(line_token[i]) + ' ' + label_list[label_token[i]] + ' ' + curr_labels + '\n'
+
             except Exception as e:
                 logger.info(e)
-                logger.info(predict_line.text_a)
-                logger.info(predict_line.label)
+                logger.info(each_feature.input_ids)
+                logger.info(each_feature.label_ids)
                 line = ''
                 break
+            i += 1
+
+
 
         writer.write(line)
         idx += 1
-        
+
 def train(**kwargs):
     config = Config()
     config.update(**kwargs)
@@ -309,7 +315,7 @@ def train(**kwargs):
     optimizer = getattr(optim, config.optim)
     optimizer = optimizer([
             {'params': base_params},
-            {'params': model.crf.parameters(), 'lr': config.lr * 100}], lr=config.lr, weight_decay=config.weight_decay)
+            {'params': model.crf.parameters(), 'lr': config.lr * 1.6}], lr=config.lr, weight_decay=config.weight_decay)
     eval_loss = 10000
     print(model.state_dict().keys())
 
@@ -340,21 +346,21 @@ def train(**kwargs):
             if step % 50 == 0:
                 print('step: {} |  epoch: {}|  loss: {}'.format(step, epoch, loss.item()))
         acc_f.write("Epoch {} :".format(epoch))
-        stop = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list)
+        stop = dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_features, label_list)
         if stop:
             break
 
     time2 = time.time()
-    model = load_model(model, path=config.checkpoint, name=config.load_path)
+    #model = load_model(model, path=config.checkpoint, name=config.load_path)
 
-    five_r = open(config.checkpoint+"five_res.log", 'a')
-    five_r.write(''.join(test(model, dev_loader, config, dev_examples, label_list)))
-    five_r.close()
+    #five_r = open(config.checkpoint+"five_res.log", 'a')
+    #five_r.write(''.join(test(model, dev_loader, config, dev_examples, label_list)))
+    #five_r.close()
     print("total time: {:.1f}s".format(time2-time1))
     acc_f.close()
 
 
-def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, label_list):
+def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_features, label_list):
     model.eval()
     eval_loss = 0
     true = []
@@ -383,7 +389,7 @@ def dev(model, dev_loader, epoch, config, acc_f, early_stopping, dev_examples, l
         true.extend([t for t in tags])
 
     with open(config.output_file, "w") as writer:
-        result_to_pair(writer, dev_examples, pred, label_list, config.max_length)
+        result_to_pair(writer, dev_features, pred, label_list, config.max_length)
 
     early_stopping(eval_loss, model, epoch)
 
@@ -440,7 +446,7 @@ def test(model, dev_loader, config, dev_examples, label_list):
 
 if __name__ == '__main__':
     fire.Fire()
-    train()
+
 
 
 
